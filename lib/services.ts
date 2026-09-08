@@ -48,6 +48,7 @@ export const documentosService = {
     api.post<{ enviado: boolean }>(`/vehiculos/${vehiculoId}/documentos/notificar`, data),
   listarGlobal: (filtros: DocumentoFiltros = {}) => api.getWithMeta<Documento[]>(`/documentos${buildQuery(filtros as Record<string, unknown>)}`),
   conteoPorTipo: () => api.get<ConteoPorTipoDocumento[]>('/documentos/conteo-por-tipo'),
+  eliminar: (vehiculoId: number, documentoId: number) => api.delete(`/vehiculos/${vehiculoId}/documentos/${documentoId}`),
 };
 
 export const dashboardService = {

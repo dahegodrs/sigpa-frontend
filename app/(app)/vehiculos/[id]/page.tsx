@@ -20,6 +20,7 @@ import WarningAmberIcon from '@mui/icons-material/WarningAmber';
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
 import EmailOutlinedIcon from '@mui/icons-material/EmailOutlined';
+import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import AppShell from '@/components/layout/app-shell';
 import StatusBadge from '@/components/ui/status-badge';
 import VehiculoFormDialog from '@/components/vehiculos/vehiculo-form-dialog';
@@ -31,6 +32,12 @@ import { useCatalogos } from '@/lib/hooks/use-catalogos';
 import { vehiculosService, documentosService, alertasService } from '@/lib/services';
 import { ApiError } from '@/lib/api-client';
 import type { Vehiculo, Documento, HistorialCambio, Alerta } from '@/types';
+import {
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+} from '@mui/material';
 
 const ROLES_PUEDEN_EDITAR = ['Administrador', 'Dependencia'];
 
@@ -48,7 +55,7 @@ function diasHastaVencimiento(fechaVencimiento?: string | null): number | null {
   return Math.ceil((vence.getTime() - hoy.getTime()) / (1000 * 60 * 60 * 24));
 }
 
-function DocumentoCard({ doc, vehiculo, puedeEditar, onSubir }: { doc: Documento; vehiculo: Vehiculo; puedeEditar: boolean; onSubir: () => void }) {
+function DocumentoCard({ doc, vehiculo, puedeEditar, puedeEliminar, onSubir, onEliminado }: { doc: Documento; vehiculo: Vehiculo; puedeEditar: boolean; puedeEliminar: boolean; onSubir: () => void; onEliminado: () => void }) {
   const theme = useTheme();
   const Icono = ICONO_POR_TIPO[doc.tipo_documento_nombre || ''] || DescriptionOutlinedIcon;
   const dias = diasHastaVencimiento(doc.fecha_vencimiento);
@@ -59,6 +66,19 @@ function DocumentoCard({ doc, vehiculo, puedeEditar, onSubir }: { doc: Documento
   const IconoEstado = estaVencido ? ErrorOutlineIcon : estaProximo ? WarningAmberIcon : estaVigente ? CheckCircleOutlineIcon : null;
   const colorIconoEstado = estaVencido ? 'error.main' : estaProximo ? '#F59E0B' : '#16A34A';
   const [dialogoNotificar, setDialogoNotificar] = useState(false);
+  const [dialogoEliminar, setDialogoEliminar] = useState(false);
+  const [eliminando, setEliminando] = useState(false);
+
+  const confirmarEliminar = async () => {
+    setEliminando(true);
+    try {
+      await documentosService.eliminar(vehiculo.id, doc.id);
+      setDialogoEliminar(false);
+      onEliminado();
+    } catch {
+      setEliminando(false);
+    }
+  };
 
   return (
     <>
@@ -133,6 +153,19 @@ function DocumentoCard({ doc, vehiculo, puedeEditar, onSubir }: { doc: Documento
               </Button>
             </Stack>
           )}
+          {puedeEliminar && (
+            <Button
+              size="small"
+              variant="text"
+              color="error"
+              fullWidth
+              sx={{ justifyContent: 'center', fontSize: '0.72rem' }}
+              startIcon={<DeleteOutlineIcon fontSize="small" />}
+              onClick={() => setDialogoEliminar(true)}
+            >
+              Eliminar
+            </Button>
+          )}
         </Stack>
       </Paper>
 
@@ -142,6 +175,28 @@ function DocumentoCard({ doc, vehiculo, puedeEditar, onSubir }: { doc: Documento
         doc={doc}
         onCerrar={() => setDialogoNotificar(false)}
       />
+
+      <Dialog open={dialogoEliminar} onClose={() => setDialogoEliminar(false)} maxWidth="xs" fullWidth>
+        <DialogTitle>Eliminar documento</DialogTitle>
+        <DialogContent>
+          <Typography variant="body2">
+            ¿Confirmas eliminar el documento <strong>{doc.tipo_documento_nombre}</strong> del vehículo{' '}
+            <strong>{vehiculo.placa}</strong>?
+          </Typography>
+          <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 1.5 }}>
+            El archivo permanecerá en Google Drive y se conservará el registro para auditoría. Solo desaparecerá
+            de esta vista.
+          </Typography>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2 }}>
+          <Button onClick={() => setDialogoEliminar(false)} disabled={eliminando}>
+            Cancelar
+          </Button>
+          <Button variant="contained" color="error" onClick={confirmarEliminar} disabled={eliminando}>
+            {eliminando ? 'Eliminando…' : 'Eliminar'}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </>
   );
 }
@@ -182,6 +237,7 @@ export default function VehiculoDetallePage() {
   useEffect(() => { if (vehiculoId) cargar(); }, [vehiculoId, cargar]);
 
   const puedeEditar = usuario && ROLES_PUEDEN_EDITAR.includes(usuario.rol_nombre);
+  const puedeEliminar = usuario && usuario.rol_nombre === 'Administrador';
 
   return (
     <AppShell titulo={vehiculo ? `Vehículo ${vehiculo.placa}` : 'Vehículo'}>
@@ -246,7 +302,14 @@ export default function VehiculoDetallePage() {
             <Grid container spacing={2} sx={{ mb: 3 }}>
               {documentos.map((doc) => (
                 <Grid item xs={12} sm={6} md={3} key={doc.id}>
-                  <DocumentoCard doc={doc} vehiculo={vehiculo} puedeEditar={!!puedeEditar} onSubir={() => setDialogoSubir(true)} />
+                  <DocumentoCard
+                    doc={doc}
+                    vehiculo={vehiculo}
+                    puedeEditar={!!puedeEditar}
+                    puedeEliminar={!!puedeEliminar}
+                    onSubir={() => setDialogoSubir(true)}
+                    onEliminado={cargar}
+                  />
                 </Grid>
               ))}
             </Grid>
