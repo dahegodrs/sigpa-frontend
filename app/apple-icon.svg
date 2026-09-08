@@ -1,0 +1,71 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 180 180" width="180" height="180">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#E8181F"/>
+      <stop offset="100%" stop-color="#B50F15"/>
+    </linearGradient>
+    <linearGradient id="shine" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="rgba(255,255,255,0.18)"/>
+      <stop offset="100%" stop-color="rgba(255,255,255,0)"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Fondo rojo con gradiente -->
+  <rect width="180" height="180" rx="40" fill="url(#bg)"/>
+
+  <!-- Brillo superior sutil -->
+  <rect width="180" height="80" rx="40" fill="url(#shine)"/>
+
+  <!-- ══ Auto (centrado en 180×180) ══ -->
+
+  <!-- Cuerpo inferior del auto -->
+  <rect x="18" y="98" width="144" height="38" rx="12" fill="white"/>
+
+  <!-- Cabina / techo (trapecio) -->
+  <path d="M46 98 L66 50 L114 50 L134 98Z" fill="white"/>
+
+  <!-- Parabrisas (tinte oscuro para profundidad) -->
+  <path d="M73 95 L83 57 L97 57 L107 95Z" fill="rgba(120,8,12,0.3)"/>
+
+  <!-- Ventana lateral izquierda -->
+  <path d="M50 95 L64 62 L76 62 L70 95Z" fill="rgba(120,8,12,0.22)"/>
+
+  <!-- Ventana lateral derecha -->
+  <path d="M110 95 L116 62 L130 62 L134 95Z" fill="rgba(120,8,12,0.22)"/>
+
+  <!-- Arco rueda izquierda (quitar blanco) -->
+  <circle cx="48" cy="130" r="21" fill="url(#bg)"/>
+  <!-- Arco rueda derecha -->
+  <circle cx="132" cy="130" r="21" fill="url(#bg)"/>
+
+  <!-- Llanta izquierda -->
+  <circle cx="48" cy="130" r="15.5" fill="none" stroke="white" stroke-width="9"/>
+  <!-- Llanta derecha -->
+  <circle cx="132" cy="130" r="15.5" fill="none" stroke="white" stroke-width="9"/>
+
+  <!-- Rayos rueda izquierda -->
+  <line x1="48" y1="115" x2="48" y2="145" stroke="#C01018" stroke-width="3" stroke-linecap="round"/>
+  <line x1="33" y1="130" x2="63" y2="130" stroke="#C01018" stroke-width="3" stroke-linecap="round"/>
+
+  <!-- Rayos rueda derecha -->
+  <line x1="132" y1="115" x2="132" y2="145" stroke="#C01018" stroke-width="3" stroke-linecap="round"/>
+  <line x1="117" y1="130" x2="147" y2="130" stroke="#C01018" stroke-width="3" stroke-linecap="round"/>
+
+  <!-- Centro rueda izquierda -->
+  <circle cx="48" cy="130" r="5" fill="white"/>
+  <!-- Centro rueda derecha -->
+  <circle cx="132" cy="130" r="5" fill="white"/>
+
+  <!-- Faro delantero -->
+  <circle cx="154" cy="106" r="6.5" fill="rgba(255,255,255,0.92)"/>
+  <circle cx="154" cy="106" r="3.5" fill="white"/>
+
+  <!-- Faro trasero -->
+  <rect x="16" y="104" width="8" height="14" rx="3" fill="rgba(255,200,200,0.9)"/>
+
+  <!-- Línea de piso/suelo -->
+  <rect x="0" y="163" width="180" height="17" rx="40" fill="rgba(0,0,0,0.15)"/>
+
+  <!-- Texto "SIGPA" pequeño en la parte inferior -->
+  <text x="90" y="157" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" font-weight="800" fill="rgba(255,255,255,0.55)" letter-spacing="3">SIGPA</text>
+</svg>

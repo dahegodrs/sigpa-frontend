@@ -1,0 +1,205 @@
+'use client';
+
+import { useCallback, useEffect, useState } from 'react';
+import { useParams, useRouter } from 'next/navigation';
+import {
+  Box, Paper, Typography, CircularProgress, Alert, Stack, Button, Chip,
+} from '@mui/material';
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+import PrintOutlinedIcon from '@mui/icons-material/PrintOutlined';
+import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
+import Image from 'next/image';
+import AppShell from '@/components/layout/app-shell';
+import { programacionesService } from '@/lib/services';
+import { ApiError } from '@/lib/api-client';
+import { useAuth } from '@/contexts/auth-context';
+import type { Programacion } from '@/types';
+
+function formatFechaLarga(fecha: string): string {
+  const d = new Date(fecha + 'T00:00:00');
+  return d.toLocaleDateString('es-CO', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }).toUpperCase();
+}
+
+export default function ProgramacionDetallePage() {
+  const params = useParams();
+  const router = useRouter();
+  const { usuario } = useAuth();
+  const id = Number(params.id);
+
+  const [prog, setProg] = useState<Programacion | null>(null);
+  const [cargando, setCargando] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const puedeEditar = usuario && ['Administrador', 'Dependencia'].includes(usuario.rol_nombre);
+
+  const cargar = useCallback(() => {
+    setCargando(true);
+    setError(null);
+    programacionesService.obtener(id)
+      .then(setProg)
+      .catch((err) => setError(err instanceof ApiError ? err.message : 'No se pudo cargar la programación'))
+      .finally(() => setCargando(false));
+  }, [id]);
+
+  useEffect(() => { if (id) cargar(); }, [id, cargar]);
+
+  return (
+    <AppShell titulo="Programación Diaria">
+      <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}>
+        <Button startIcon={<ArrowBackIcon />} onClick={() => router.push('/programaciones')} size="small">
+          Volver al listado
+        </Button>
+        <Stack direction="row" spacing={1}>
+          {puedeEditar && prog && (
+            <Button variant="outlined" size="small" startIcon={<EditOutlinedIcon />} onClick={() => router.push(`/programaciones/${id}/editar`)}>
+              Editar
+            </Button>
+          )}
+          {prog && (
+            <Button variant="contained" size="small" startIcon={<PrintOutlinedIcon />} onClick={() => window.print()}>
+              Imprimir / PDF
+            </Button>
+          )}
+        </Stack>
+      </Stack>
+
+      {cargando && <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}><CircularProgress /></Box>}
+      {error && <Alert severity="error">{error}</Alert>}
+
+      {prog && (
+        <>
+          {/* ── Vista normal (pantalla) ── */}
+          <Box className="no-print">
+            <Paper sx={{ p: 2, mb: 2 }}>
+              <Stack direction="row" spacing={2} alignItems="center">
+                <Box sx={{ width: 44, height: 44, borderRadius: 2, bgcolor: 'primary.main', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  <Typography sx={{ color: '#fff', fontWeight: 800, fontSize: 18 }}>📅</Typography>
+                </Box>
+                <Box>
+                  <Typography variant="subtitle1" fontWeight={700} sx={{ textTransform: 'capitalize' }}>
+                    {formatFechaLarga(prog.fecha)}
+                  </Typography>
+                  <Chip label="15-FR-36" size="small" variant="outlined" sx={{ fontSize: '0.68rem', mt: 0.5 }} />
+                </Box>
+              </Stack>
+            </Paper>
+            <Paper sx={{ overflow: 'auto' }}>
+              <Box sx={{ overflowX: 'auto' }}>
+                <Box component="table" sx={{ width: '100%', borderCollapse: 'collapse', minWidth: 900 }}>
+                  <Box component="thead">
+                    <Box component="tr" sx={{ bgcolor: '#1A1A2E' }}>
+                      {['VEHÍCULO', 'CONDUCTOR', 'DEPENDENCIA', 'DESTINO', 'HORA DE SALIDA Y PUNTO DE ENCUENTRO', 'ACTIVIDAD'].map((h) => (
+                        <Box component="th" key={h} sx={{ p: 1.25, color: '#fff', fontWeight: 700, fontSize: '0.72rem', textAlign: 'center', letterSpacing: '0.06em', border: '1px solid #333' }}>
+                          {h}
+                        </Box>
+                      ))}
+                    </Box>
+                  </Box>
+                  <Box component="tbody">
+                    {(prog.items || []).map((item, i) => (
+                      <Box component="tr" key={i} sx={{ bgcolor: item.es_vacaciones ? '#FFF8E1' : i % 2 === 0 ? '#fff' : '#F9F9FA' }}>
+                        {[item.vehiculo_placa || '—', item.conductor, item.dependencia, item.destino, item.hora_salida_punto, item.actividad].map((val, ci) => (
+                          <Box component="td" key={ci} sx={{ p: 1, fontSize: '0.8rem', border: '1px solid #E0E0E0', textAlign: ci === 0 ? 'center' : 'left', fontWeight: item.es_vacaciones ? 700 : 400 }}>
+                            {val}
+                          </Box>
+                        ))}
+                      </Box>
+                    ))}
+                  </Box>
+                </Box>
+              </Box>
+            </Paper>
+          </Box>
+
+          {/* ── Vista de impresión (formato 15-FR-36 exacto) ── */}
+          <PrintView prog={prog} />
+        </>
+      )}
+
+      <style jsx global>{`
+        @media print {
+          body * { visibility: hidden !important; }
+          .print-area, .print-area * { visibility: visible !important; }
+          .no-print { display: none !important; }
+          .print-area { position: fixed; top: 0; left: 0; width: 100%; }
+          @page { size: A4 landscape; margin: 10mm; }
+        }
+        @media screen { .print-area { display: none; } }
+      `}</style>
+    </AppShell>
+  );
+}
+
+function PrintView({ prog }: { prog: Programacion }) {
+  const fechaLarga = formatFechaLarga(prog.fecha);
+
+  return (
+    <div className="print-area" style={{ fontFamily: 'Arial, sans-serif', fontSize: '10pt', color: '#000' }}>
+      {/* Encabezado */}
+      <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: 4 }}>
+        <tbody>
+          <tr>
+            <td style={{ width: 120, border: '2px solid #000', padding: '4px 8px', verticalAlign: 'middle' }}>
+              <img src="/logo-funza.png" alt="Alcaldía de Funza" style={{ width: '100%', maxWidth: 110, display: 'block' }} />
+            </td>
+            <td style={{ border: '2px solid #000', padding: '6px 12px', textAlign: 'center', verticalAlign: 'middle' }}>
+              <div style={{ fontSize: '16pt', fontWeight: 'bold', letterSpacing: 1 }}>PROGRAMACIÓN DIARIA DE VEHÍCULOS</div>
+              <div style={{ fontSize: '11pt', fontWeight: 'bold', marginTop: 4 }}>15-FR-36</div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      {/* Tabla de datos */}
+      <table style={{ width: '100%', borderCollapse: 'collapse', border: '2px solid #000' }}>
+        <thead>
+          <tr style={{ backgroundColor: '#D9D9D9' }}>
+            <th style={thStyle}>FECHA</th>
+            <th style={thStyle}>VEHÍCULO</th>
+            <th style={thStyle}>CONDUCTOR</th>
+            <th style={thStyle}>DEPENDENCIA</th>
+            <th style={thStyle}>DESTINO</th>
+            <th style={{ ...thStyle, width: '18%' }}>HORA DE SALIDA Y PUNTO DE ENCUENTRO</th>
+            <th style={thStyle}>ACTIVIDAD</th>
+          </tr>
+        </thead>
+        <tbody>
+          {(prog.items || []).map((item, i) => {
+            const bgVac = item.es_vacaciones ? '#FFF3CD' : '#fff';
+            return (
+              <tr key={i} style={{ backgroundColor: bgVac }}>
+                {i === 0 && (
+                  <td rowSpan={prog.items!.length} style={{ ...tdStyle, textAlign: 'center', fontWeight: 'bold', verticalAlign: 'middle', width: '11%', backgroundColor: '#fff' }}>
+                    {fechaLarga.split(' ').map((w, wi) => <span key={wi} style={{ display: 'block' }}>{w}</span>)}
+                  </td>
+                )}
+                <td style={{ ...tdStyle, textAlign: 'center', fontWeight: 600 }}>{item.vehiculo_placa || ''}</td>
+                <td style={{ ...tdStyle, fontWeight: item.es_vacaciones ? 700 : 400 }}>{item.conductor}</td>
+                <td style={{ ...tdStyle, fontWeight: item.es_vacaciones ? 700 : 400 }}>{item.dependencia}</td>
+                <td style={{ ...tdStyle, fontWeight: item.es_vacaciones ? 700 : 400 }}>{item.destino}</td>
+                <td style={{ ...tdStyle, fontWeight: item.es_vacaciones ? 700 : 400 }}>{item.hora_salida_punto}</td>
+                <td style={{ ...tdStyle, fontWeight: item.es_vacaciones ? 700 : 400 }}>{item.actividad}</td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+const thStyle: React.CSSProperties = {
+  border: '1px solid #000',
+  padding: '5px 6px',
+  textAlign: 'center',
+  fontWeight: 'bold',
+  fontSize: '9pt',
+  backgroundColor: '#D9D9D9',
+};
+
+const tdStyle: React.CSSProperties = {
+  border: '1px solid #000',
+  padding: '4px 6px',
+  fontSize: '9pt',
+  verticalAlign: 'middle',
+};

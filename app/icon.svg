@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#E8181F"/>
+      <stop offset="100%" stop-color="#B50F15"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Fondo rojo institucional con gradiente sutil -->
+  <rect width="32" height="32" rx="7" fill="url(#bg)"/>
+
+  <!-- Sombra interior superior para dar profundidad -->
+  <rect width="32" height="6" rx="7" fill="rgba(255,255,255,0.07)"/>
+
+  <!-- Cuerpo del auto (blanco) -->
+  <rect x="3" y="17" width="26" height="7" rx="2.5" fill="white"/>
+
+  <!-- Techo/cabina del auto (blanco) — trapecio -->
+  <path d="M8 17 L12 9 L20 9 L24 17Z" fill="white"/>
+
+  <!-- Parabrisas delantero (tinte rojo/oscuro para dar dimensión) -->
+  <path d="M13 16.5 L15 10.5 L19 10.5 L21 16.5Z" fill="rgba(140,10,15,0.35)"/>
+
+  <!-- Arco de rueda izquierdo (quitar fondo blanco del cuerpo) -->
+  <circle cx="8.5" cy="23" r="3.8" fill="url(#bg)"/>
+  <!-- Arco de rueda derecho -->
+  <circle cx="23.5" cy="23" r="3.8" fill="url(#bg)"/>
+
+  <!-- Llanta izquierda — aro blanco -->
+  <circle cx="8.5" cy="23" r="2.8" fill="none" stroke="white" stroke-width="1.8"/>
+  <!-- Llanta derecha — aro blanco -->
+  <circle cx="23.5" cy="23" r="2.8" fill="none" stroke="white" stroke-width="1.8"/>
+
+  <!-- Centro de rueda izquierda -->
+  <circle cx="8.5" cy="23" r="1" fill="white"/>
+  <!-- Centro de rueda derecha -->
+  <circle cx="23.5" cy="23" r="1" fill="white"/>
+
+  <!-- Faro delantero (punto blanco brillante) -->
+  <circle cx="26.5" cy="18.5" r="1.2" fill="rgba(255,255,255,0.9)"/>
+
+  <!-- Línea inferior decorativa (asfalto/carretera) -->
+  <rect x="0" y="29" width="32" height="3" rx="7" fill="rgba(0,0,0,0.18)"/>
+</svg>

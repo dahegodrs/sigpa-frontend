@@ -1,0 +1,484 @@
+CONTEXTO MAESTRO DEL PROYECTO
+Nombre del proyecto
+Sistema Integral de Gestión del Parque Automotor y Control de Vencimientos Documentales para una Alcaldía.
+Rol esperado
+Actúa como un consultor senior en tecnología, arquitectura de software, transformación digital y desarrollo de sistemas para entidades públicas. El objetivo es diseñar y documentar una solución web moderna que permita administrar el parque automotor de una Alcaldía, controlar los vencimientos de documentos obligatorios y generar alertas automáticas antes de que dichos documentos expiren.
+Contexto del problema
+La Alcaldía actualmente administra la información de sus vehículos mediante una base de datos en Excel. El principal problema identificado por la gerencia es el riesgo de que se venzan documentos obligatorios como:
+•	SOAT
+•	Tecnomecánica
+•	Pólizas de seguros
+•	Otros documentos asociados a los vehículos
+El control actual es manual, depende de revisar hojas de cálculo y no existe un mecanismo automático de alertas. Esto genera riesgos administrativos, operativos y legales, ya que un vehículo podría quedar en servicio con documentos vencidos.
+La entidad ya cuenta con cuentas corporativas de Google Workspace y almacenamiento en Google Drive, por lo que se desea aprovechar este ecosistema para la autenticación, almacenamiento de documentos y envío de notificaciones.
+Objetivo general
+Construir una plataforma web centralizada que permita:
+•	Registrar y administrar todos los vehículos de la Alcaldía.
+•	Almacenar y organizar la información documental de cada vehículo.
+•	Adjuntar documentos digitales en Google Drive.
+•	Controlar automáticamente las fechas de vencimiento.
+•	Generar alertas preventivas y correctivas.
+•	Mostrar un tablero de control ejecutivo en tiempo real.
+•	Facilitar la consulta rápida por placa, dependencia, estado o tipo de vehículo.
+•	Mantener trazabilidad de cambios y actualizaciones.
+Objetivos específicos
+•	Migrar la información existente desde la base de datos en Excel.
+•	Estandarizar el registro de vehículos.
+•	Crear formularios para ingreso y actualización de información.
+•	Centralizar los documentos digitales de cada vehículo.
+•	Implementar alertas automáticas por correo electrónico.
+•	Implementar un dashboard ejecutivo con indicadores clave.
+•	Permitir filtros y búsquedas rápidas.
+•	Registrar historial de cambios.
+•	Definir roles y permisos de acceso.
+Información que debe manejar el sistema
+Datos del vehículo
+•	Placa
+•	Tipo de vehículo
+•	Marca
+•	Línea
+•	Modelo
+•	Color
+•	Número de motor
+•	Número de chasis
+•	VIN
+•	Capacidad
+•	Tipo de combustible
+•	Dependencia responsable
+•	Funcionario responsable
+•	Estado del vehículo
+•	Ubicación
+•	Observaciones
+Estados posibles del vehículo
+•	Activo
+•	En reposo
+•	En mantenimiento
+•	En comodato
+•	Dado de baja
+•	Otro estado definido por la Alcaldía
+Documentos a controlar
+•	SOAT
+•	Tecnomecánica
+•	Póliza de seguros
+•	Tarjeta de propiedad
+•	Licencia de tránsito
+•	Otros documentos requeridos
+Para cada documento se debe almacenar:
+•	Fecha de expedición
+•	Fecha de vencimiento
+•	Estado del documento
+•	Archivo PDF o imagen
+•	Ruta o enlace en Google Drive
+•	Observaciones
+Módulos funcionales requeridos
+Dashboard ejecutivo
+El gerente debe poder ingresar y visualizar en pocos segundos el estado general del parque automotor.
+Tarjetas e indicadores esperados:
+•	Total de vehículos.
+•	Vehículos activos.
+•	Vehículos en reposo.
+•	Vehículos en mantenimiento.
+•	Vehículos en comodato.
+•	Vehículos dados de baja.
+•	Total de motocicletas.
+•	Total de automóviles.
+•	Total de camionetas.
+•	Total de maquinaria.
+•	SOAT vigentes.
+•	SOAT próximos a vencer.
+•	SOAT vencidos.
+•	Tecnomecánicas vigentes.
+•	Tecnomecánicas próximas a vencer.
+•	Tecnomecánicas vencidas.
+•	Pólizas vigentes.
+•	Pólizas próximas a vencer.
+•	Pólizas vencidas.
+•	Porcentaje de salud documental del parque automotor.
+Gráficos esperados:
+•	Vehículos por dependencia.
+•	Vehículos por estado.
+•	Vehículos por tipo.
+•	Vencimientos por mes.
+•	Comparativo de documentos vigentes, próximos y vencidos.
+•	Tendencia de vencimientos próximos.
+Gestión de vehículos
+•	Registrar nuevos vehículos.
+•	Editar información existente.
+•	Consultar ficha completa del vehículo.
+•	Cambiar estado del vehículo.
+•	Asignar dependencia y responsable.
+•	Registrar observaciones.
+•	Consultar historial del vehículo.
+Gestión documental
+•	Registrar fechas de vencimiento.
+•	Adjuntar archivos PDF o imágenes.
+•	Almacenar documentos en Google Drive.
+•	Visualizar documentos desde el sistema.
+•	Reemplazar documentos vencidos por nuevas versiones.
+•	Mantener histórico de documentos anteriores.
+Alertas automáticas
+El sistema debe ejecutar una revisión diaria de vencimientos y enviar notificaciones automáticas.
+Reglas sugeridas:
+•	45 días antes del vencimiento: alerta preventiva.
+•	30 días antes: alerta preventiva.
+•	15 días antes: alerta importante.
+•	7 días antes: alerta prioritaria.
+•	1 día antes: alerta urgente.
+•	Documento vencido: alerta crítica diaria hasta actualización.
+Canales de notificación:
+•	Correo electrónico corporativo de Gmail.
+•	Google Chat.
+•	Otros canales futuros como WhatsApp Business si se integra posteriormente.
+Destinatarios de las alertas:
+•	Responsable del vehículo.
+•	Dependencia correspondiente.
+•	Administrador del sistema.
+•	Gerencia o jefe de transporte cuando el documento esté vencido.
+Consulta y filtros
+El sistema debe permitir búsquedas rápidas por:
+•	Placa.
+•	Dependencia.
+•	Tipo de vehículo.
+•	Estado.
+•	Responsable.
+•	Marca.
+•	Modelo.
+•	Año.
+•	Estado documental.
+Ficha detallada del vehículo
+Cada vehículo debe tener una vista única que incluya:
+•	Información general.
+•	Estado actual.
+•	Dependencia responsable.
+•	Funcionario responsable.
+•	Documentos asociados.
+•	Fechas de vencimiento.
+•	Estado de cada documento.
+•	Enlaces a documentos en Google Drive.
+•	Fotografías del vehículo.
+•	Historial de cambios.
+•	Observaciones.
+•	Información de mantenimiento futura.
+Historial y trazabilidad
+El sistema debe registrar automáticamente:
+•	Usuario que realizó el cambio.
+•	Fecha y hora del cambio.
+•	Campo modificado.
+•	Valor anterior.
+•	Valor nuevo.
+•	Motivo de la actualización.
+Formulario de registro y actualización
+Sección: Información general
+•	Placa.
+•	Tipo de vehículo.
+•	Marca.
+•	Línea.
+•	Modelo.
+•	Color.
+•	Motor.
+•	Chasis.
+•	VIN.
+•	Capacidad.
+•	Combustible.
+•	Dependencia.
+•	Responsable.
+•	Estado.
+•	Ubicación.
+•	Observaciones.
+Sección: Documentos
+•	Fecha de expedición del SOAT.
+•	Fecha de vencimiento del SOAT.
+•	Adjuntar PDF del SOAT.
+•	Fecha de expedición de la Tecnomecánica.
+•	Fecha de vencimiento de la Tecnomecánica.
+•	Adjuntar PDF de la Tecnomecánica.
+•	Fecha de expedición de la póliza.
+•	Fecha de vencimiento de la póliza.
+•	Adjuntar PDF de la póliza.
+•	Adjuntar tarjeta de propiedad.
+•	Adjuntar licencia de tránsito.
+•	Adjuntar otros documentos.
+Comportamiento esperado
+•	Validar campos obligatorios.
+•	Validar formato de placa.
+•	Validar fechas.
+•	Calcular automáticamente el estado del documento.
+•	Subir archivos a Google Drive.
+•	Guardar enlace del archivo.
+•	Registrar historial de cambios.
+Estados documentales
+•	Vigente: documento con más de 45 días para vencer.
+•	Próximo a vencer: documento dentro del rango configurado.
+•	Vencido: documento cuya fecha ya pasó.
+•	Pendiente: documento no cargado.
+Roles y permisos
+Administrador
+•	Acceso total.
+•	Crear, editar y eliminar registros.
+•	Configurar alertas.
+•	Gestionar usuarios.
+•	Ver reportes globales.
+Dependencia o responsable
+•	Ver vehículos asignados.
+•	Actualizar información de sus vehículos.
+•	Cargar documentos.
+•	Consultar alertas.
+Consulta
+•	Solo lectura.
+•	Acceso al dashboard y reportes.
+Gerencia
+•	Acceso al dashboard ejecutivo.
+•	Acceso a reportes estratégicos.
+•	Visualización de alertas críticas.
+Reportes requeridos
+•	Vehículos activos.
+•	Vehículos por dependencia.
+•	Vehículos por estado.
+•	Vehículos por tipo.
+•	SOAT vencidos.
+•	SOAT próximos a vencer.
+•	Tecnomecánicas vencidas.
+•	Pólizas vencidas.
+•	Documentos pendientes de cargar.
+•	Histórico de renovaciones.
+•	Histórico de cambios.
+•	Reporte general del parque automotor.
+•	Exportación a PDF y Excel.
+Integración con Google Workspace
+Autenticación
+•	Inicio de sesión con cuentas corporativas de Google.
+•	Control de acceso según dominio institucional.
+•	Gestión de sesiones.
+Almacenamiento
+•	Guardar documentos en Google Drive.
+•	Organizar carpetas por vehículo o por placa.
+•	Generar enlaces seguros.
+•	Evitar duplicidad de archivos.
+Notificaciones
+•	Enviar correos mediante Gmail API.
+•	Enviar mensajes a Google Chat.
+•	Programar envíos automáticos diarios.
+Arquitectura tecnológica recomendada
+Frontend
+•	React.
+•	Material UI.
+•	Diseño responsive.
+•	Recharts para gráficos.
+Backend
+•	Go con Gin.
+•	API REST.
+•	Lógica de alertas y validaciones.
+•	Tareas programadas diarias.
+Base de datos
+•	SQL server
+•	Modelo relacional.
+•	Tablas para vehículos, documentos, usuarios, alertas, historial y dependencias.
+Infraestructura
+•	Google Cloud Run o servidor institucional.
+•	Google Drive para documentos.
+•	Google OAuth para autenticación.
+•	Gmail API para correos.
+•	Google Chat API para mensajes.
+Modelo de datos inicial sugerido
+Tabla vehículos
+•	id
+•	placa
+•	tipo_vehiculo
+•	marca
+•	linea
+•	modelo
+•	color
+•	motor
+•	chasis
+•	vin
+•	capacidad
+•	combustible
+•	dependencia_id
+•	responsable_id
+•	estado
+•	ubicacion
+•	observaciones
+•	fecha_creacion
+•	fecha_actualizacion
+Tabla documentos
+•	id
+•	vehiculo_id
+•	tipo_documento
+•	fecha_expedicion
+•	fecha_vencimiento
+•	estado_documento
+•	archivo_url
+•	observaciones
+•	fecha_carga
+Tabla alertas
+•	id
+•	vehiculo_id
+•	documento_id
+•	tipo_alerta
+•	fecha_programada
+•	fecha_envio
+•	destinatario
+•	estado_envio
+Tabla historial
+•	id
+•	entidad
+•	entidad_id
+•	usuario_id
+•	accion
+•	campo_modificado
+•	valor_anterior
+•	valor_nuevo
+•	fecha
+Flujo funcional esperado
+1.	Importar la base de datos actual desde Excel.
+2.	Normalizar y validar la información.
+3.	Registrar o actualizar vehículos mediante formulario.
+4.	Adjuntar documentos en Google Drive.
+5.	Guardar fechas de vencimiento.
+6.	Calcular automáticamente el estado documental.
+7.	Ejecutar revisión diaria de vencimientos.
+8.	Generar alertas automáticas.
+9.	Enviar notificaciones.
+10.	Mostrar información actualizada en el dashboard.
+11.	Registrar historial de cambios.
+Fases de implementación sugeridas
+Fase 1: Análisis y migración
+•	Revisar la base de datos actual.
+•	Limpiar y normalizar información.
+•	Definir catálogo de dependencias y estados.
+•	Importar datos iniciales.
+Fase 2: Módulo base
+•	Autenticación con Google.
+•	Gestión de vehículos.
+•	Formulario de registro.
+•	Gestión documental.
+•	Dashboard inicial.
+Fase 3: Alertas automáticas
+•	Motor de vencimientos.
+•	Correos automáticos.
+•	Panel de alertas.
+•	Configuración de rangos.
+Fase 4: Reportes y trazabilidad
+•	Exportación PDF y Excel.
+•	Historial de cambios.
+•	Reportes gerenciales.
+•	Indicadores avanzados.
+Fase 5: Evolución futura
+•	Mantenimientos preventivos.
+•	Mantenimientos correctivos.
+•	Control de combustible.
+•	Kilometraje.
+•	Llantas y baterías.
+•	Conductores asignados.
+•	Accidentes y siniestros.
+•	Multas y comparendos.
+•	Costos por vehículo.
+•	Contratos de comodato.
+Requerimientos no funcionales
+•	Acceso web desde navegador.
+•	Diseño responsive para computador y tablet.
+•	Interfaz simple y rápida.
+•	Seguridad de acceso.
+•	Copias de seguridad.
+•	Trazabilidad de cambios.
+•	Escalabilidad.
+•	Disponibilidad institucional.
+•	Rendimiento adecuado para consultas rápidas.
+Resultado esperado del proyecto
+Al finalizar la implementación, la Alcaldía debe contar con una plataforma centralizada que permita administrar todo su parque automotor, mantener organizados los documentos de cada vehículo, recibir alertas automáticas antes de los vencimientos y visualizar en tiempo real el estado general mediante un dashboard ejecutivo.
+El sistema debe eliminar la dependencia de revisiones manuales en Excel, reducir el riesgo de vencimientos, mejorar el control administrativo y proporcionar información clara para la toma de decisiones gerenciales.
+Instrucción final
+Con base en este contexto, generar la documentación funcional y técnica del proyecto, incluyendo requerimientos, casos de uso, arquitectura, modelo de datos, diseño del dashboard, diseño del formulario, lógica de alertas, plan de implementación y propuesta tecnológica para presentar a la Alcaldía como proyecto de transformación digital del parque automotor.
+
+# SIGPA - Guía de Implementación Frontend basada en el Manual de Identidad Visual de la Alcaldía de Funza
+
+## Objetivo
+
+Este documento resume los lineamientos obligatorios del Manual de Identidad Visual de la Alcaldía de Funza para garantizar que SIGPA respete la identidad institucional en todas sus interfaces digitales.
+
+## Paleta Oficial
+
+- Rojo Funza: #DA151C
+- Blanco: #FFFFFF
+- Negro: #000000
+- Gris Claro: #E6E6E6
+- Gris Medio: #CCCCCC
+- Gris Oscuro: #999999
+- Gris UI: #808080
+- Gris Texto: #666666
+- Gris Profundo: #333333
+
+## Tipografía Oficial
+
+Fuente: Outfit
+
+Pesos:
+- Thin
+- ExtraLight
+- Light
+- Regular
+- Medium
+- SemiBold
+- Bold
+- ExtraBold
+- Black
+
+## Componentes de la Aplicación
+
+- Login
+- Dashboard Ejecutivo
+- Gestión de Vehículos
+- Detalle de Vehículo
+- Gestión Documental
+- Alertas
+- Reportes
+- Administración
+
+## Reglas UX/UI
+
+### Sidebar
+- Fondo: #333333
+- Hover: #DA151C
+
+### Topbar
+- Fondo: #FFFFFF
+
+### Botones
+- Primario: #DA151C
+- Secundario: #E6E6E6
+
+### Dashboard
+- Tarjetas KPI.
+- Gráficos Recharts.
+- Timeline.
+- Centro de alertas.
+
+## Restricciones
+
+- No alterar el escudo.
+- No utilizar marcas de gobierno temporales.
+- No cambiar la tipografía Outfit.
+- No modificar el rojo institucional.
+
+## Multi-Tenant
+
+La primera implementación será para la Alcaldía de Funza, pero SIGPA permitirá configurar:
+
+- organization_id
+- logo
+- colores
+- dominio
+- correos institucionales
+
+## Theme Material UI
+
+```ts
+primary: "#DA151C"
+secondary: "#333333"
+background: "#FFFFFF"
+```
+
+## Conclusión
+
+SIGPA debe percibirse como una plataforma oficial de la Alcaldía de Funza, manteniendo la posibilidad de ser reutilizada por otras entidades mediante un sistema configurable de temas.
+
