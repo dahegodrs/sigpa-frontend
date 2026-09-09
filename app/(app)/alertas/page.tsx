@@ -34,10 +34,29 @@ const ESTILO_SEVERIDAD: Record<Severidad, { label: string; bg: string; color: st
   green:  { label: 'Informativa', bg: '#F0FDF4', color: '#15803D', colorActivo: '#0F5F2D', icono: InfoOutlinedIcon },
 };
 
-const TITULO_POR_NIVEL: Record<string, string> = {
-  Critica: 'Documento vencido', Urgente: 'Vence mañana',
-  Prioritaria: 'Vence en 7 días', Importante: 'Vence en 15 días', Preventiva: 'Vencimiento próximo',
-};
+// Construye un mensaje específico usando el documento real de la alerta
+// (ej. "SOAT vencido hace 5 días") en vez de un título genérico fijo — ver
+// misma lógica en components/alertas/alertas-popup.tsx.
+function construirMensajeAlerta(a: Alerta): string {
+  const tipoDoc = a.tipo_documento_nombre || 'Documento';
+  if (!a.documento_fecha_vencimiento) {
+    const TITULO_POR_NIVEL: Record<string, string> = {
+      Critica: `${tipoDoc} vencido`,
+      Urgente: `${tipoDoc} vence mañana`,
+      Prioritaria: `${tipoDoc} vence en 7 días`,
+      Importante: `${tipoDoc} vence en 15 días`,
+      Preventiva: `${tipoDoc}: vencimiento próximo`,
+    };
+    return TITULO_POR_NIVEL[a.tipo_alerta] || `${tipoDoc}: ${a.tipo_alerta}`;
+  }
+  const hoy = new Date(); hoy.setHours(0, 0, 0, 0);
+  const vence = new Date(a.documento_fecha_vencimiento); vence.setHours(0, 0, 0, 0);
+  const dias = Math.ceil((vence.getTime() - hoy.getTime()) / (1000 * 60 * 60 * 24));
+  if (dias < 0) return `${tipoDoc} vencido hace ${Math.abs(dias)} día${Math.abs(dias) !== 1 ? 's' : ''}`;
+  if (dias === 0) return `${tipoDoc} vence hoy`;
+  if (dias === 1) return `${tipoDoc} vence mañana`;
+  return `${tipoDoc} vence en ${dias} días`;
+}
 
 const NIVELES_DISPONIBLES = ['Preventiva', 'Importante', 'Prioritaria', 'Urgente', 'Critica'];
 
@@ -251,7 +270,7 @@ export default function AlertasPage() {
                     <Chip icon={<DirectionsCarIcon sx={{ fontSize: '12px !important' }} />} label={placasPorVehiculo[a.vehiculo_id] || `#${a.vehiculo_id}`} size="small" sx={{ fontFamily: 'monospace', fontWeight: 700, bgcolor: 'action.hover', fontSize: '0.7rem', height: 20 }} />
                     {!a.leida && <Box sx={{ width: 7, height: 7, borderRadius: '50%', bgcolor: estilo.color, flexShrink: 0 }} />}
                   </Stack>
-                  <Typography variant="body2" fontWeight={600} sx={{ opacity: a.leida ? 0.65 : 1 }}>{TITULO_POR_NIVEL[a.tipo_alerta] || a.tipo_alerta}</Typography>
+                  <Typography variant="body2" fontWeight={600} sx={{ opacity: a.leida ? 0.65 : 1 }}>{construirMensajeAlerta(a)}</Typography>
                   <Typography variant="caption" color="text.secondary">{a.destinatario} · {a.estado_envio} · {formatearFecha(a.fecha_programada)}</Typography>
                 </Box>
                 {!a.leida && (

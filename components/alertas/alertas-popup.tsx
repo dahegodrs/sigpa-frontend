@@ -29,13 +29,34 @@ const ESTILO_SEVERIDAD: Record<Severidad, { label: string; bg: string; color: st
   green:  { label: 'Informativa',  bg: '#F0FDF4', color: '#16A34A', icono: InfoOutlinedIcon },
 };
 
-const TITULO_POR_NIVEL: Record<string, string> = {
-  Critica: 'Documento vencido',
-  Urgente: 'Vence mañana',
-  Prioritaria: 'Vence en 7 días',
-  Importante: 'Vence en 15 días',
-  Preventiva: 'Vencimiento próximo',
-};
+// Construye un mensaje específico usando el documento real de la alerta
+// (ej. "SOAT vencido hace 5 días" / "Tecnomecánica vence en 3 días") en vez
+// de un título genérico fijo por nivel — así se sabe exactamente cuál
+// documento requiere atención y con qué urgencia, sin tener que entrar al
+// vehículo para averiguarlo.
+function construirMensajeAlerta(a: Alerta): string {
+  const tipoDoc = a.tipo_documento_nombre || 'Documento';
+  if (!a.documento_fecha_vencimiento) {
+    // Respaldo si no se pudo resolver la fecha real (documento eliminado, etc.)
+    const TITULO_POR_NIVEL: Record<string, string> = {
+      Critica: `${tipoDoc} vencido`,
+      Urgente: `${tipoDoc} vence mañana`,
+      Prioritaria: `${tipoDoc} vence en 7 días`,
+      Importante: `${tipoDoc} vence en 15 días`,
+      Preventiva: `${tipoDoc}: vencimiento próximo`,
+    };
+    return TITULO_POR_NIVEL[a.tipo_alerta] || `${tipoDoc}: ${a.tipo_alerta}`;
+  }
+
+  const hoy = new Date(); hoy.setHours(0, 0, 0, 0);
+  const vence = new Date(a.documento_fecha_vencimiento); vence.setHours(0, 0, 0, 0);
+  const dias = Math.ceil((vence.getTime() - hoy.getTime()) / (1000 * 60 * 60 * 24));
+
+  if (dias < 0) return `${tipoDoc} vencido hace ${Math.abs(dias)} día${Math.abs(dias) !== 1 ? 's' : ''}`;
+  if (dias === 0) return `${tipoDoc} vence hoy`;
+  if (dias === 1) return `${tipoDoc} vence mañana`;
+  return `${tipoDoc} vence en ${dias} días`;
+}
 
 interface Props {
   alertas: Alerta[];
@@ -184,7 +205,7 @@ export default function AlertasPopup({ alertas, placaPorVehiculo }: Props) {
                     <Chip label={estilo.label} size="small" sx={{ bgcolor: estilo.bg, color: estilo.color, fontWeight: 700, height: 18, fontSize: '0.65rem' }} />
                   </Stack>
                   <Typography variant="body2" fontWeight={600} sx={{ fontSize: '0.82rem' }}>
-                    {TITULO_POR_NIVEL[a.tipo_alerta] || a.tipo_alerta}
+                    {construirMensajeAlerta(a)}
                   </Typography>
                   <Typography variant="caption" color="text.secondary">
                     {new Date(a.fecha_programada).toLocaleDateString('es-CO', { day: '2-digit', month: 'short', year: 'numeric' })}

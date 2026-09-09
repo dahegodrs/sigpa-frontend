@@ -60,9 +60,20 @@ function DocumentoCard({ doc, vehiculo, puedeEditar, puedeEliminar, onSubir, onE
   const theme = useTheme();
   const Icono = ICONO_POR_TIPO[doc.tipo_documento_nombre || ''] || DescriptionOutlinedIcon;
   const dias = diasHastaVencimiento(doc.fecha_vencimiento);
-  const estaVencido = doc.estado_documento === 'Vencido';
-  const estaProximo = doc.estado_documento === 'Proximo_a_vencer';
-  const estaVigente = doc.estado_documento === 'Vigente';
+
+  // El estado visual (badge, color de borde) se calcula EN TIEMPO REAL a
+  // partir de los días restantes, en vez de usar directamente
+  // doc.estado_documento. Ese campo se guarda en la base de datos y solo se
+  // recalcula cuando corre el job diario (o el botón "Ejecutar revisión
+  // ahora"), por lo que puede quedar desactualizado por horas o días —
+  // provocando el bug donde la tarjeta dice "Vence hace 1 día" pero la
+  // etiqueta de arriba sigue diciendo "Próximo a vencer". Si hay fecha de
+  // vencimiento, siempre se confía en el cálculo con la fecha real; solo se
+  // usa el campo de BD como respaldo cuando no hay fecha (ej. "Pendiente").
+  const estadoReal = dias !== null ? (dias < 0 ? 'Vencido' : dias <= 45 ? 'Proximo_a_vencer' : 'Vigente') : doc.estado_documento;
+  const estaVencido = estadoReal === 'Vencido';
+  const estaProximo = estadoReal === 'Proximo_a_vencer';
+  const estaVigente = estadoReal === 'Vigente';
   const colorBorde = estaVencido ? theme.palette.error.main : estaProximo ? '#F59E0B' : estaVigente ? '#16A34A' : 'transparent';
   const IconoEstado = estaVencido ? ErrorOutlineIcon : estaProximo ? WarningAmberIcon : estaVigente ? CheckCircleOutlineIcon : null;
   const colorIconoEstado = estaVencido ? 'error.main' : estaProximo ? '#F59E0B' : '#16A34A';
@@ -88,7 +99,7 @@ function DocumentoCard({ doc, vehiculo, puedeEditar, puedeEliminar, onSubir, onE
           <Box sx={{ width: 38, height: 38, borderRadius: 2, bgcolor: alpha(colorBorde || theme.palette.primary.main, 0.1), display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <Icono sx={{ color: colorBorde || 'primary.main', fontSize: 22 }} />
           </Box>
-          <StatusBadge estado={doc.estado_documento} />
+          <StatusBadge estado={estadoReal} />
         </Stack>
         <Box sx={{ flex: 1 }}>
           <Typography variant="body2" fontWeight={700} sx={{ mb: 0.25 }}>{doc.tipo_documento_nombre}</Typography>
