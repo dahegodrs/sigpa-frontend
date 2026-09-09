@@ -9,6 +9,7 @@ import {
 import { alpha, useTheme } from '@mui/material/styles';
 import DoneAllIcon from '@mui/icons-material/DoneAll';
 import AddIcon from '@mui/icons-material/Add';
+import RefreshIcon from '@mui/icons-material/Refresh';
 import NotificationsNoneIcon from '@mui/icons-material/NotificationsNone';
 import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
 import WarningAmberOutlinedIcon from '@mui/icons-material/WarningAmberOutlined';
@@ -55,6 +56,8 @@ export default function AlertasPage() {
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [dialogoNuevaRegla, setDialogoNuevaRegla] = useState(false);
+  const [ejecutandoRevision, setEjecutandoRevision] = useState(false);
+  const [mensajeRevision, setMensajeRevision] = useState<string | null>(null);
 
   const esAdministrador = usuario?.rol_nombre === 'Administrador';
 
@@ -104,6 +107,27 @@ export default function AlertasPage() {
     } catch (err) { setError(err instanceof ApiError ? err.message : 'No se pudo actualizar la regla'); }
   };
 
+  // Ejecuta manualmente el mismo proceso que corre automáticamente cada
+  // madrugada (cron): revisa las fechas de vencimiento reales de los
+  // documentos en la base de datos y genera las alertas correspondientes
+  // según las reglas configuradas. Útil para pruebas — sin esto habría que
+  // esperar hasta el próximo día para ver alertas nuevas, o insertarlas a
+  // mano directamente en la base de datos.
+  const ejecutarRevisionAhora = async () => {
+    setEjecutandoRevision(true);
+    setMensajeRevision(null);
+    setError(null);
+    try {
+      await alertasService.ejecutarRevisionManual();
+      setMensajeRevision('Revisión ejecutada correctamente. Si hay documentos vencidos o próximos a vencer, las alertas ya deberían aparecer en la lista de abajo.');
+      cargar();
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : 'No se pudo ejecutar la revisión de vencimientos');
+    } finally {
+      setEjecutandoRevision(false);
+    }
+  };
+
   return (
     <AppShell titulo="Centro de Alertas">
       <Stack direction={{ xs: 'column', sm: 'row' }} justifyContent="space-between" alignItems={{ sm: 'center' }} spacing={2} sx={{ mb: 3 }}>
@@ -118,12 +142,30 @@ export default function AlertasPage() {
             Marcar todas leídas
           </Button>
           {esAdministrador && (
+            <Button
+              variant="outlined"
+              size="small"
+              color="secondary"
+              startIcon={ejecutandoRevision ? <CircularProgress size={14} color="inherit" /> : <RefreshIcon />}
+              onClick={ejecutarRevisionAhora}
+              disabled={ejecutandoRevision}
+            >
+              {ejecutandoRevision ? 'Revisando…' : 'Ejecutar revisión ahora'}
+            </Button>
+          )}
+          {esAdministrador && (
             <Button variant="contained" size="small" startIcon={<AddIcon />} onClick={() => setDialogoNuevaRegla(true)}>
               Nueva regla
             </Button>
           )}
         </Stack>
       </Stack>
+
+      {mensajeRevision && (
+        <Alert severity="success" sx={{ mb: 2 }} onClose={() => setMensajeRevision(null)}>
+          {mensajeRevision}
+        </Alert>
+      )}
 
       {/* KPIs de severidad — clickeables como filtro */}
       <Grid container spacing={2} sx={{ mb: 3 }}>
