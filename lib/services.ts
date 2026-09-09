@@ -118,6 +118,7 @@ export const listasService = {
 export const programacionesService = {
   listar: () => api.get<Programacion[]>('/programaciones'),
   obtener: (id: number) => api.get<Programacion>(`/programaciones/${id}`),
+  obtenerUltima: () => api.get<Programacion>('/programaciones/ultima'),
   crear: (data: Partial<Programacion>) => api.post<{ id: number }>('/programaciones', data),
   actualizar: (id: number, data: Partial<Programacion>) => api.put(`/programaciones/${id}`, data),
   eliminar: (id: number) => api.delete(`/programaciones/${id}`),

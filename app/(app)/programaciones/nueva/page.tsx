@@ -13,6 +13,7 @@ import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import PrintOutlinedIcon from '@mui/icons-material/PrintOutlined';
 import SaveOutlinedIcon from '@mui/icons-material/SaveOutlined';
 import DragIndicatorIcon from '@mui/icons-material/DragIndicator';
+import ContentCopyOutlinedIcon from '@mui/icons-material/ContentCopyOutlined';
 import AppShell from '@/components/layout/app-shell';
 import { programacionesService, listasService, vehiculosService, dependenciasService } from '@/lib/services';
 import { ApiError } from '@/lib/api-client';
@@ -37,6 +38,7 @@ export default function NuevaProgramacionPage() {
   const [filas, setFilas] = useState<ProgramacionItem[]>([FILA_VACIA()]);
   const [guardando, setGuardando] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [copiando, setCopiando] = useState(false);
 
   // Catálogos
   const [conductores, setConductores] = useState<ListaConfiguracion[]>([]);
@@ -75,6 +77,37 @@ export default function NuevaProgramacionPage() {
 
   const agregarFila = () => setFilas((prev) => [...prev, FILA_VACIA()]);
   const eliminarFila = (idx: number) => setFilas((prev) => prev.filter((_, i) => i !== idx));
+
+  const copiarProgramacionAnterior = async () => {
+    setCopiando(true);
+    setError(null);
+    try {
+      const anterior = await programacionesService.obtenerUltima();
+      if (!anterior.items || anterior.items.length === 0) {
+        setError('La última programación no tiene filas para copiar');
+        return;
+      }
+      // Se copian los datos de cada fila pero SIN el id ni programacion_id
+      // (para que se traten como filas nuevas al guardar), preservando
+      // vehículo, conductor, dependencia, destino, hora y actividad tal cual
+      // quedaron la última vez, así el usuario solo edita lo que cambió.
+      setFilas(
+        anterior.items.map((item) => ({
+          vehiculo_id: item.vehiculo_id ?? null,
+          conductor: item.conductor,
+          dependencia: item.dependencia,
+          destino: item.destino,
+          hora_salida_punto: item.hora_salida_punto,
+          actividad: item.actividad,
+          es_vacaciones: item.es_vacaciones,
+        }))
+      );
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : 'No hay programaciones anteriores para copiar');
+    } finally {
+      setCopiando(false);
+    }
+  };
 
   const guardar = async () => {
     if (!fecha) { setError('La fecha es obligatoria'); return; }
@@ -130,9 +163,25 @@ export default function NuevaProgramacionPage() {
           <Typography variant="subtitle2" fontWeight={600}>
             Filas de la programación ({filas.length})
           </Typography>
-          <Button size="small" startIcon={<AddIcon />} variant="outlined" onClick={agregarFila}>
-            Agregar fila
-          </Button>
+          <Stack direction="row" spacing={1}>
+            <Tooltip title="Trae las filas de la última programación guardada, para editarlas en vez de crearlas una por una">
+              <span>
+                <Button
+                  size="small"
+                  startIcon={copiando ? <CircularProgress size={14} color="inherit" /> : <ContentCopyOutlinedIcon />}
+                  variant="outlined"
+                  color="secondary"
+                  onClick={copiarProgramacionAnterior}
+                  disabled={copiando}
+                >
+                  {copiando ? 'Copiando…' : 'Copiar programación anterior'}
+                </Button>
+              </span>
+            </Tooltip>
+            <Button size="small" startIcon={<AddIcon />} variant="outlined" onClick={agregarFila}>
+              Agregar fila
+            </Button>
+          </Stack>
         </Box>
 
         <Box sx={{ overflowX: 'auto' }}>

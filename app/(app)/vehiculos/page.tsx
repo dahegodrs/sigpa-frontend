@@ -58,6 +58,18 @@ function VehiculosContent() {
   // Si viene estado_id desde URL (ej: click en card del dashboard) usarlo directamente
   const estadoIdUrl = searchParams.get('estado_id');
   const [estadoId, setEstadoId] = useState<number | ''>(estadoIdUrl ? Number(estadoIdUrl) : '');
+
+  // Sincroniza la placa cuando cambia el parámetro de la URL (ej: búsqueda
+  // desde el topbar mientras ya se está en /vehiculos — Next.js no remonta
+  // el componente al navegar a la misma ruta, así que sin este efecto el
+  // useState inicial de `placa` nunca se actualiza y la búsqueda no ocurre).
+  useEffect(() => {
+    const placaUrl = searchParams.get('placa');
+    if (placaUrl !== null) {
+      setPlaca(placaUrl);
+      setPage(0);
+    }
+  }, [searchParams]);
   const [page, setPage] = useState(0);
   const [pageSize, setPageSize] = useState(20);
   const [dialogoAbierto, setDialogoAbierto] = useState(false);

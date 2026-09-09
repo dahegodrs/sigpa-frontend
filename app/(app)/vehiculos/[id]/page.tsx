@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import {
   Box, Paper, Grid, Typography, Button, Divider,
-  CircularProgress, Alert, Stack, Chip,
+  CircularProgress, Alert, Stack, Chip, IconButton,
 } from '@mui/material';
 import { alpha, useTheme } from '@mui/material/styles';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
@@ -22,6 +22,7 @@ import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
 import EmailOutlinedIcon from '@mui/icons-material/EmailOutlined';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import AppShell from '@/components/layout/app-shell';
+import Tooltip from '@mui/material/Tooltip';
 import StatusBadge from '@/components/ui/status-badge';
 import VehiculoFormDialog from '@/components/vehiculos/vehiculo-form-dialog';
 import DocumentoUploadDialog from '@/components/vehiculos/documento-upload-dialog';
@@ -113,7 +114,7 @@ function DocumentoCard({ doc, vehiculo, puedeEditar, puedeEliminar, onSubir, onE
           )}
         </Box>
 
-        {/* Botones — layout vertical para evitar el desalineamiento */}
+        {/* Acción principal: ver archivo, a todo lo ancho */}
         <Stack spacing={0.75} sx={{ mt: 0.5 }}>
           {doc.archivo_url && (
             <Button
@@ -125,46 +126,37 @@ function DocumentoCard({ doc, vehiculo, puedeEditar, puedeEliminar, onSubir, onE
               href={doc.archivo_url}
               target="_blank"
               rel="noopener"
-              sx={{ justifyContent: 'flex-start' }}
+              sx={{ justifyContent: 'center' }}
             >
               Ver archivo
             </Button>
           )}
-          {puedeEditar && (
-            <Stack direction="row" spacing={0.75}>
-              <Button
-                size="small"
-                variant="text"
-                sx={{ flex: 1, justifyContent: 'center' }}
-                startIcon={<UploadFileIcon fontSize="small" />}
-                onClick={onSubir}
-              >
-                Renovar
-              </Button>
-              <Button
-                size="small"
-                variant="text"
-                color="info"
-                sx={{ flex: 1, justifyContent: 'center', fontSize: '0.72rem' }}
-                startIcon={<EmailOutlinedIcon fontSize="small" />}
-                onClick={() => setDialogoNotificar(true)}
-              >
-                Notificar
-              </Button>
+
+          {/* Acciones secundarias: solo íconos con tooltip, alineadas en una fila */}
+          {(puedeEditar || puedeEliminar) && (
+            <Stack direction="row" spacing={0.5} justifyContent="center" sx={{ pt: 0.25 }}>
+              {puedeEditar && (
+                <Tooltip title="Renovar documento (subir nueva versión)">
+                  <IconButton size="small" onClick={onSubir} sx={{ color: 'text.secondary', '&:hover': { color: 'primary.main', bgcolor: alpha(theme.palette.primary.main, 0.08) } }}>
+                    <UploadFileIcon fontSize="small" />
+                  </IconButton>
+                </Tooltip>
+              )}
+              {puedeEditar && (
+                <Tooltip title="Notificar renovación por correo">
+                  <IconButton size="small" onClick={() => setDialogoNotificar(true)} sx={{ color: 'text.secondary', '&:hover': { color: 'info.main', bgcolor: alpha(theme.palette.info.main, 0.08) } }}>
+                    <EmailOutlinedIcon fontSize="small" />
+                  </IconButton>
+                </Tooltip>
+              )}
+              {puedeEliminar && (
+                <Tooltip title="Eliminar documento (borrado lógico)">
+                  <IconButton size="small" onClick={() => setDialogoEliminar(true)} sx={{ color: 'text.secondary', '&:hover': { color: 'error.main', bgcolor: alpha(theme.palette.error.main, 0.08) } }}>
+                    <DeleteOutlineIcon fontSize="small" />
+                  </IconButton>
+                </Tooltip>
+              )}
             </Stack>
-          )}
-          {puedeEliminar && (
-            <Button
-              size="small"
-              variant="text"
-              color="error"
-              fullWidth
-              sx={{ justifyContent: 'center', fontSize: '0.72rem' }}
-              startIcon={<DeleteOutlineIcon fontSize="small" />}
-              onClick={() => setDialogoEliminar(true)}
-            >
-              Eliminar
-            </Button>
           )}
         </Stack>
       </Paper>
