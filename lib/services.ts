@@ -44,7 +44,7 @@ export const documentosService = {
     api.get<Documento[]>(`/vehiculos/${vehiculoId}/documentos/${tipoDocumentoId}/historico`),
   subir: (vehiculoId: number, form: FormData) =>
     api.postForm<{ id: number; archivo_url: string }>(`/vehiculos/${vehiculoId}/documentos/upload`, form),
-  notificar: (vehiculoId: number, data: { tipo_documento?: string; fecha_vencimiento?: string; destinatario_extra?: string }) =>
+  notificar: (vehiculoId: number, data: { tipo_documento?: string; fecha_vencimiento?: string; destinatario_extra?: string; asunto?: string; cuerpo?: string }) =>
     api.post<{ enviado: boolean }>(`/vehiculos/${vehiculoId}/documentos/notificar`, data),
   listarGlobal: (filtros: DocumentoFiltros = {}) => api.getWithMeta<Documento[]>(`/documentos${buildQuery(filtros as Record<string, unknown>)}`),
   conteoPorTipo: () => api.get<ConteoPorTipoDocumento[]>('/documentos/conteo-por-tipo'),

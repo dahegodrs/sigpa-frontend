@@ -100,6 +100,8 @@ export default function NotificarDocumentoDialog({ abierto, vehiculo, doc, onCer
           ? new Date(doc.fecha_vencimiento).toLocaleDateString('es-CO')
           : '',
         destinatario_extra: destinatario.trim(),
+        asunto,
+        cuerpo,
       });
       setResultado({ ok: true, msg: `✓ Correo enviado a ${destinatario.trim()} desde ${REMITENTE}` });
     } catch {
