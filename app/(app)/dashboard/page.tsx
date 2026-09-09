@@ -9,6 +9,18 @@ import DirectionsCarIcon from '@mui/icons-material/DirectionsCarOutlined';
 import HealthAndSafetyOutlinedIcon from '@mui/icons-material/HealthAndSafetyOutlined';
 import BarChartOutlinedIcon from '@mui/icons-material/BarChartOutlined';
 import NotificationsActiveOutlinedIcon from '@mui/icons-material/NotificationsActiveOutlined';
+// Íconos reales de las tarjetas KPI — variante "Rounded" con relleno de
+// color, para que se vean como íconos reconocibles (clipboard, escudo,
+// reloj de arena, etc.) en vez de trazos abstractos genéricos.
+import DirectionsCarFilledRoundedIcon from '@mui/icons-material/DirectionsCarFilledRounded';
+import CheckCircleRoundedIcon from '@mui/icons-material/CheckCircleRounded';
+import BuildRoundedIcon from '@mui/icons-material/BuildRounded';
+import GarageRoundedIcon from '@mui/icons-material/GarageRounded';
+import SwapHorizRoundedIcon from '@mui/icons-material/SwapHorizRounded';
+import ConstructionRoundedIcon from '@mui/icons-material/ConstructionRounded';
+import GppBadRoundedIcon from '@mui/icons-material/GppBadRounded';
+import HourglassBottomRoundedIcon from '@mui/icons-material/HourglassBottomRounded';
+import MonitorHeartRoundedIcon from '@mui/icons-material/MonitorHeartRounded';
 import AppShell from '@/components/layout/app-shell';
 import KpiCard from '@/components/dashboard/kpi-card';
 import AlertasPopup from '@/components/alertas/alertas-popup';
@@ -37,110 +49,52 @@ const COLOR_ROJO_FUNZA = '#DA151C';   // rojo institucional — vencido / críti
 const COLOR_NARANJA_ALERTA = '#F5951F'; // naranja — próximo a vencer
 const COLOR_SALUD_INDICE = '#0E9F8E'; // teal — indicador distintivo, no se repite en ninguna otra tarjeta
 
-// ── Íconos SVG a color (monocromáticos, heredan el color de su tarjeta) ──
-// Se dibujan con trazos definidos y formas reconocibles (no genéricas de
-// IA): un vehículo real con ruedas, un check de disponibilidad, una llave
-// de mecánico, una cochera, dos flechas de intercambio, una excavadora, un
-// documento con X, un reloj de arena, un escudo con check, un pulso vital.
+// ── Íconos de las tarjetas KPI ──────────────────────────────────────────
+// Íconos reales de Material Design (variante "Rounded", con relleno de
+// color sólido) en vez de trazos abstractos: un auto real, un check de
+// disponibilidad, una llave de mecánico, una cochera, flechas de
+// intercambio, una excavadora, un escudo de alerta, un reloj de arena y un
+// monitor de pulso — cada uno reconocible de inmediato y coherente con el
+// estilo de dashboards ejecutivos profesionales.
 
 function IconoFlota({ color }: { color: string }) {
-  return (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M3 16l1.5-5.5A2 2 0 0 1 6.4 9h11.2a2 2 0 0 1 1.9 1.5L21 16" />
-      <path d="M3 16h18v2.5a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V16z" />
-      <circle cx="7.5" cy="19" r="1.5" />
-      <circle cx="16.5" cy="19" r="1.5" />
-      <path d="M7 9V6.5A1.5 1.5 0 0 1 8.5 5h7A1.5 1.5 0 0 1 17 6.5V9" />
-    </svg>
-  );
+  return <DirectionsCarFilledRoundedIcon sx={{ color, fontSize: 22 }} />;
 }
 
 function IconoActivos({ color }: { color: string }) {
-  return (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <circle cx="12" cy="12" r="9" />
-      <path d="M8 12.5l2.5 2.5L16 9.5" />
-    </svg>
-  );
+  return <CheckCircleRoundedIcon sx={{ color, fontSize: 22 }} />;
 }
 
 function IconoMantenimiento({ color }: { color: string }) {
-  return (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M14.7 6.3a4 4 0 0 0-5.6 5.6L4 17l3 3 5.1-5.1a4 4 0 0 0 5.6-5.6L15 12l-3-3 2.7-2.7z" />
-    </svg>
-  );
+  return <BuildRoundedIcon sx={{ color, fontSize: 22 }} />;
 }
 
 function IconoReposo({ color }: { color: string }) {
-  return (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M4 21V10.5L12 4l8 6.5V21" />
-      <path d="M9 21v-6h6v6" />
-    </svg>
-  );
+  return <GarageRoundedIcon sx={{ color, fontSize: 22 }} />;
 }
 
 function IconoComodato({ color }: { color: string }) {
-  return (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M4 8h13M13 4l4 4-4 4" />
-      <path d="M20 16H7M11 12l-4 4 4 4" />
-    </svg>
-  );
+  return <SwapHorizRoundedIcon sx={{ color, fontSize: 22 }} />;
 }
 
 function IconoMaquinaria({ color }: { color: string }) {
-  return (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M3 19h5" />
-      <path d="M6 19V8.5L11 5l1.5 3" />
-      <path d="M12.5 8L18 12v7" />
-      <circle cx="6" cy="20.2" r="1.3" />
-      <circle cx="17" cy="20.2" r="1.3" />
-      <path d="M12.5 11.5h4" />
-    </svg>
-  );
+  return <ConstructionRoundedIcon sx={{ color, fontSize: 22 }} />;
 }
 
 function IconoDocVencido({ color }: { color: string }) {
-  return (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M7 3h7l4 4v13a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z" />
-      <path d="M14 3v4h4" />
-      <path d="M9.5 13.5l5 5M14.5 13.5l-5 5" />
-    </svg>
-  );
+  return <GppBadRoundedIcon sx={{ color, fontSize: 22 }} />;
 }
 
 function IconoPorVencer({ color }: { color: string }) {
-  return (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M12 8v4l2.5 1.5" />
-      <circle cx="12" cy="13" r="8" />
-      <path d="M9 2h6" />
-      <path d="M12 2v3" />
-    </svg>
-  );
+  return <HourglassBottomRoundedIcon sx={{ color, fontSize: 22 }} />;
 }
 
 function IconoPolizaVencida({ color }: { color: string }) {
-  return (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M12 3l7 3v6c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6l7-3z" />
-      <path d="M9.5 12l2 2 3.5-3.5" strokeOpacity="0" />
-      <path d="M9 9.5l6 6M15 9.5l-6 6" />
-    </svg>
-  );
+  return <GppBadRoundedIcon sx={{ color, fontSize: 22 }} />;
 }
 
 function IconoSaludDocumental({ color }: { color: string }) {
-  return (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M12 21s-7-4.35-9.5-9C1 8.5 2.5 5 6 5c2 0 3.2 1.2 4 2.2 0 0 .5 1.3 2 1.3s2-1.3 2-1.3c.8-1 2-2.2 4-2.2 3.5 0 5 3.5 3.5 7-2.5 4.65-9.5 9-9.5 9z" strokeOpacity="0" />
-      <path d="M2 13h4l1.5-4 3 8 2-5 1.5 2H21" />
-    </svg>
-  );
+  return <MonitorHeartRoundedIcon sx={{ color, fontSize: 22 }} />;
 }
 
 // ── Sección título ────────────────────────────────────────────────────────

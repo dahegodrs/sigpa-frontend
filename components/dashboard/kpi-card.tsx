@@ -101,14 +101,15 @@ export default function KpiCard({
         )}
       </Box>
 
-      {/* Ícono en círculo suave del color de la categoría */}
+      {/* Ícono en círculo suave del color de la categoría, con anillo sutil */}
       {iconePersonalizado && (
         <Box
           sx={{
-            width: 38,
-            height: 38,
-            borderRadius: '10px',
+            width: 42,
+            height: 42,
+            borderRadius: '50%',
             bgcolor: alpha(color, 0.12),
+            border: `1px solid ${alpha(color, 0.22)}`,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
