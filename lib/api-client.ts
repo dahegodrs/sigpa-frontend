@@ -148,15 +148,36 @@ async function requestFull<T>(path: string, options: RequestInit = {}): Promise<
   return promise as Promise<RespuestaAPI<T>>;
 }
 
+// Las mutaciones (POST/PUT/DELETE) invalidan TODO el caché de lecturas GET
+// después de completarse con éxito. Sin esto, una pantalla que hace
+// setState tras un DELETE/POST y luego vuelve a pedir la misma lista (ej.
+// documentos de un vehículo) puede recibir la respuesta cacheada de hace
+// unos segundos, que todavía incluye el registro recién eliminado/creado —
+// causando que la UI parezca "no refrescar" hasta que el caché expira (20s)
+// o se recarga la página manualmente.
 export const api = {
   get: <T>(path: string) => request<T>(path, { method: 'GET' }),
   getWithMeta: <T>(path: string) => requestFull<T>(path, { method: 'GET' }),
-  post: <T>(path: string, data?: unknown) =>
-    request<T>(path, { method: 'POST', body: data ? JSON.stringify(data) : undefined }),
-  postForm: <T>(path: string, form: FormData) => request<T>(path, { method: 'POST', body: form }),
-  put: <T>(path: string, data?: unknown) =>
-    request<T>(path, { method: 'PUT', body: data ? JSON.stringify(data) : undefined }),
-  delete: <T>(path: string) => request<T>(path, { method: 'DELETE' }),
+  post: async <T>(path: string, data?: unknown) => {
+    const result = await request<T>(path, { method: 'POST', body: data ? JSON.stringify(data) : undefined });
+    invalidarCache();
+    return result;
+  },
+  postForm: async <T>(path: string, form: FormData) => {
+    const result = await request<T>(path, { method: 'POST', body: form });
+    invalidarCache();
+    return result;
+  },
+  put: async <T>(path: string, data?: unknown) => {
+    const result = await request<T>(path, { method: 'PUT', body: data ? JSON.stringify(data) : undefined });
+    invalidarCache();
+    return result;
+  },
+  delete: async <T>(path: string) => {
+    const result = await request<T>(path, { method: 'DELETE' });
+    invalidarCache();
+    return result;
+  },
 };
 
 export { ApiError };
