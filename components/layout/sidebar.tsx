@@ -14,6 +14,8 @@ import AssessmentIcon from '@mui/icons-material/AssessmentOutlined';
 import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettingsOutlined';
 import LogoutIcon from '@mui/icons-material/Logout';
 import CalendarMonthOutlinedIcon from '@mui/icons-material/CalendarMonthOutlined';
+import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
+import ListAltOutlinedIcon from '@mui/icons-material/ListAltOutlined';
 import { useAuth } from '@/contexts/auth-context';
 import { useTema } from '@/contexts/tema-context';
 import { useModo } from '@/contexts/modo-context';
@@ -30,6 +32,11 @@ const ITEMS_NAV = [
   { label: 'Programación', href: '/programaciones', icon: CalendarMonthOutlinedIcon, roles: ['Administrador', 'Dependencia', 'Consulta', 'Gerencia'], badge: null },
   { label: 'Reportes', href: '/reportes', icon: AssessmentIcon, roles: ['Administrador', 'Consulta', 'Gerencia'], badge: null },
   { label: 'Administración', href: '/admin', icon: AdminPanelSettingsIcon, roles: ['Administrador'], badge: null },
+  // El rol "Solicitante" es de acceso reducido — solo puede pedir un
+  // vehículo y ver el estado de lo que ya pidió, sin ver el resto del
+  // sistema (dashboard, flota completa, documentos, etc.).
+  { label: 'Solicitar vehículo', href: '/solicitar-vehiculo', icon: AddCircleOutlineIcon, roles: ['Solicitante'], badge: null },
+  { label: 'Mis solicitudes', href: '/mis-solicitudes', icon: ListAltOutlinedIcon, roles: ['Solicitante'], badge: null },
 ];
 
 export default function Sidebar({ movil, abierto, onCerrar }: { movil: boolean; abierto: boolean; onCerrar: () => void }) {

@@ -13,6 +13,7 @@ import type {
   Organizacion,
   OrganizacionTema,
   Programacion,
+  ProgramacionItem,
   TipoVehiculoCatalogo,
   Usuario,
   Vehiculo,
@@ -131,4 +132,20 @@ export const programacionesService = {
   crear: (data: Partial<Programacion>) => api.post<{ id: number }>('/programaciones', data),
   actualizar: (id: number, data: Partial<Programacion>) => api.put(`/programaciones/${id}`, data),
   eliminar: (id: number) => api.delete(`/programaciones/${id}`),
+};
+
+export interface SolicitudVehiculoPayload {
+  fecha: string; // "YYYY-MM-DD"
+  hora_solicitada: string; // "HH:MM"
+  punto_encuentro: string;
+  destino: string;
+  actividad: string;
+  motivo: string;
+  dependencia?: string;
+}
+
+export const solicitudesVehiculoService = {
+  crear: (data: SolicitudVehiculoPayload) =>
+    api.post<{ programacion_id: number; item_id: number }>('/solicitudes-vehiculo', data),
+  misSolicitudes: () => api.get<ProgramacionItem[]>('/solicitudes-vehiculo/mias'),
 };

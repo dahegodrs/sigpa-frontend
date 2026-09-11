@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import {
   Box, Paper, Typography, CircularProgress, Alert, Stack, Button,
-  TextField, MenuItem, Checkbox, Tooltip, IconButton,
+  TextField, MenuItem, Checkbox, Tooltip, IconButton, Chip,
 } from '@mui/material';
 import { alpha, useTheme } from '@mui/material/styles';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
@@ -158,8 +158,15 @@ export default function EditarProgramacionPage() {
               ))}
             </Box>
             {filas.map((fila, idx) => (
-              <Box key={idx} sx={{ display: 'grid', gridTemplateColumns: '32px 130px 1fr 1fr 1fr 1fr 1fr 1fr 70px', gap: 0.5, px: 1.5, py: 0.75, borderBottom: '1px solid', borderColor: 'divider', bgcolor: fila.es_vacaciones ? '#FFF8E1' : idx % 2 === 0 ? 'background.paper' : alpha(theme.palette.text.primary, 0.02), alignItems: 'center', opacity: fila.programado ? 1 : 0.55 }}>
-                <Stack direction="row" alignItems="center"><DragIndicatorIcon sx={{ color: 'text.disabled', fontSize: 16 }} /></Stack>
+              <Box key={idx} sx={{ display: 'grid', gridTemplateColumns: '32px 130px 1fr 1fr 1fr 1fr 1fr 1fr 70px', gap: 0.5, px: 1.5, py: 0.75, borderBottom: '1px solid', borderColor: 'divider', bgcolor: fila.origen === 'solicitud' ? '#EAF2FF' : fila.es_vacaciones ? '#FFF8E1' : idx % 2 === 0 ? 'background.paper' : alpha(theme.palette.text.primary, 0.02), alignItems: 'center', opacity: fila.programado ? 1 : 0.55 }}>
+                <Stack direction="row" alignItems="center" spacing={0.25}>
+                  <DragIndicatorIcon sx={{ color: 'text.disabled', fontSize: 16 }} />
+                  {fila.origen === 'solicitud' && (
+                    <Tooltip title={`Solicitado por ${fila.solicitante_nombre || 'un usuario'}${fila.motivo ? ` — Motivo: ${fila.motivo}` : ''}`}>
+                      <Chip label="Solicitud" size="small" color="info" sx={{ height: 18, fontSize: '0.6rem', fontWeight: 700 }} />
+                    </Tooltip>
+                  )}
+                </Stack>
                 <TextField select size="small" value={fila.vehiculo_id ?? ''} onChange={(e) => actualizarFila(idx, 'vehiculo_id', e.target.value ? Number(e.target.value) : null)} disabled={fila.es_vacaciones} sx={{ '& .MuiInputBase-root': { fontSize: 12 } }}>
                   <MenuItem value=""><em>Sin vehículo</em></MenuItem>
                   {vehiculos.map((v) => <MenuItem key={v.id} value={v.id}>{v.placa}</MenuItem>)}

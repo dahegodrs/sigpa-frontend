@@ -259,6 +259,14 @@ export interface ProgramacionItem {
   // sistema pero no salen en el documento oficial impreso/exportado.
   programado: boolean;
   orden?: number;
+  // ── Campos de solicitud (formulario "Solicitar vehículo") ──────────────
+  motivo?: string | null;
+  origen?: 'manual' | 'solicitud';
+  solicitante_nombre?: string | null;
+  solicitante_email?: string | null;
+  hora_solicitada?: string | null; // "HH:MM"
+  punto_encuentro?: string | null;
+  fecha_programacion?: string; // solo viene en "Mis solicitudes"
 }
 
 export interface Programacion {
