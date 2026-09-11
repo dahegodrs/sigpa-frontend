@@ -21,6 +21,17 @@ function formatFechaLarga(fecha: string): string {
   return d.toLocaleDateString('es-CO', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }).toUpperCase();
 }
 
+// Devuelve la fecha partida en máximo 2 líneas legibles: el día de la
+// semana en la primera línea y "día de mes de año" en la segunda — en vez
+// de partir el texto por cada espacio (lo que dejaba el número del día
+// solo, cortado, en una tercera línea dentro de una celda angosta).
+function formatFechaDosLineas(fecha: string): [string, string] {
+  const d = new Date(fecha + 'T00:00:00');
+  const diaSemana = d.toLocaleDateString('es-CO', { weekday: 'long' }).toUpperCase();
+  const resto = d.toLocaleDateString('es-CO', { day: 'numeric', month: 'long', year: 'numeric' }).toUpperCase();
+  return [diaSemana + ',', resto];
+}
+
 export default function ProgramacionDetallePage() {
   const params = useParams();
   const router = useRouter();
@@ -163,7 +174,7 @@ export default function ProgramacionDetallePage() {
 }
 
 function PrintView({ prog }: { prog: Programacion }) {
-  const fechaLarga = formatFechaLarga(prog.fecha);
+  const fechaDosLineas = formatFechaDosLineas(prog.fecha);
 
   return (
     <div id="programacion-print-area" className="print-area" style={{ fontFamily: 'Arial, sans-serif', fontSize: '10pt', color: '#000' }}>
@@ -186,7 +197,7 @@ function PrintView({ prog }: { prog: Programacion }) {
       <table style={{ width: '100%', borderCollapse: 'collapse', border: '2px solid #000' }}>
         <thead>
           <tr style={{ backgroundColor: '#D9D9D9' }}>
-            <th style={thStyle}>FECHA</th>
+            <th style={{ ...thStyle, width: '13%' }}>FECHA</th>
             <th style={thStyle}>VEHÍCULO</th>
             <th style={thStyle}>CONDUCTOR</th>
             <th style={thStyle}>DEPENDENCIA</th>
@@ -202,8 +213,8 @@ function PrintView({ prog }: { prog: Programacion }) {
             return (
               <tr key={i} style={{ backgroundColor: bgVac }}>
                 {i === 0 && (
-                  <td rowSpan={(prog.items || []).length} style={{ ...tdStyle, textAlign: 'center', fontWeight: 'bold', verticalAlign: 'middle', width: '11%', backgroundColor: '#fff' }}>
-                    {fechaLarga.split(' ').map((w, wi) => <span key={wi} style={{ display: 'block' }}>{w}</span>)}
+                  <td rowSpan={(prog.items || []).length} style={{ ...tdStyle, textAlign: 'center', fontWeight: 'bold', verticalAlign: 'middle', width: '13%', backgroundColor: '#fff', whiteSpace: 'nowrap' }}>
+                    {fechaDosLineas.map((linea, wi) => <div key={wi}>{linea}</div>)}
                   </td>
                 )}
                 <td style={{ ...tdStyle, textAlign: 'center', fontWeight: 600 }}>{item.vehiculo_placa || ''}</td>

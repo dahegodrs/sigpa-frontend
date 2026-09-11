@@ -18,14 +18,40 @@ export async function generarPDFDesdeElemento(elementoId: string, nombreArchivo:
 
   // Se hace visible temporalmente (la vista de impresión suele estar oculta
   // con display:none en pantalla) para que html2canvas pueda capturarla.
-  const displayOriginal = elemento.style.display;
+  // También se fuerza position:fixed/left:0 y un z-index alto para que el
+  // elemento no quede recortado por el layout del resto de la página
+  // mientras se toma la "foto" — sin esto, html2canvas puede capturar solo
+  // la porción visible en el viewport y cortar columnas de la tabla.
+  const estiloOriginal = {
+    display: elemento.style.display,
+    position: elemento.style.position,
+    left: elemento.style.left,
+    top: elemento.style.top,
+    zIndex: elemento.style.zIndex,
+    width: elemento.style.width,
+  };
   elemento.style.display = 'block';
+  elemento.style.position = 'fixed';
+  elemento.style.left = '0';
+  elemento.style.top = '0';
+  elemento.style.zIndex = '-1'; // detrás de todo, invisible para el usuario, pero renderizado
+  elemento.style.width = 'max-content';
 
   try {
+    // scrollWidth/scrollHeight reales del elemento — necesarios para que
+    // html2canvas capture la tabla completa (incluyendo columnas que se
+    // extienden más allá del viewport visible) en vez de recortarla.
+    const anchoReal = elemento.scrollWidth;
+    const altoReal = elemento.scrollHeight;
+
     const canvas = await html2canvas(elemento, {
       scale: 2, // mayor resolución para que el texto se vea nítido en el PDF
       useCORS: true,
       backgroundColor: '#ffffff',
+      width: anchoReal,
+      height: altoReal,
+      windowWidth: anchoReal,
+      windowHeight: altoReal,
     });
 
     const imgData = canvas.toDataURL('image/png');
@@ -51,6 +77,11 @@ export async function generarPDFDesdeElemento(elementoId: string, nombreArchivo:
     pdf.addImage(imgData, 'PNG', x, y, anchoFinal, altoFinal);
     pdf.save(nombreArchivo);
   } finally {
-    elemento.style.display = displayOriginal;
+    elemento.style.display = estiloOriginal.display;
+    elemento.style.position = estiloOriginal.position;
+    elemento.style.left = estiloOriginal.left;
+    elemento.style.top = estiloOriginal.top;
+    elemento.style.zIndex = estiloOriginal.zIndex;
+    elemento.style.width = estiloOriginal.width;
   }
 }

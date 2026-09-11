@@ -25,6 +25,7 @@ import {
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import EditIcon from '@mui/icons-material/EditOutlined';
+import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import SearchIcon from '@mui/icons-material/Search';
 import GroupIcon from '@mui/icons-material/GroupOutlined';
 import BusinessIcon from '@mui/icons-material/BusinessOutlined';
@@ -321,6 +322,20 @@ function TabDependencias() {
     cargar();
   }, [cargar]);
 
+  const eliminar = async (d: Dependencia) => {
+    // Borrado lógico en el backend (activo = FALSE) — la dependencia deja
+    // de listarse y de ofrecerse en combos, pero se conserva en la base de
+    // datos para no romper vehículos o históricos que ya la referencian.
+    if (!confirm(`¿Eliminar la dependencia "${d.nombre}"? Esta acción no se puede deshacer desde la interfaz.`)) return;
+    setError(null);
+    try {
+      await dependenciasService.eliminar(d.id);
+      cargar();
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : 'No se pudo eliminar la dependencia');
+    }
+  };
+
   return (
     <Paper>
       <Stack direction="row" justifyContent="flex-end" sx={{ p: 2 }}>
@@ -357,52 +372,59 @@ function TabDependencias() {
               <TableRow>
                 <TableCell>Dependencia</TableCell>
                 <TableCell align="center">Vehículos</TableCell>
-                <TableCell>Responsable</TableCell>
-                <TableCell align="right">Editar</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {dependencias.map((d) => (
-                <TableRow key={d.id} hover>
-                  <TableCell>
-                    <Stack direction="row" spacing={1.5} alignItems="center">
-                      <Box
-                        sx={{
-                          width: 30,
-                          height: 30,
-                          borderRadius: 1.5,
-                          bgcolor: alpha(theme.palette.primary.main, 0.12),
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
+                  <TableCell>Responsable</TableCell>
+                  <TableCell align="right">Acciones</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {dependencias.map((d) => (
+                  <TableRow key={d.id} hover>
+                    <TableCell>
+                      <Stack direction="row" spacing={1.5} alignItems="center">
+                        <Box
+                          sx={{
+                            width: 30,
+                            height: 30,
+                            borderRadius: 1.5,
+                            bgcolor: alpha(theme.palette.primary.main, 0.12),
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                          }}
+                        >
+                          <BusinessIcon fontSize="small" sx={{ color: 'primary.main' }} />
+                        </Box>
+                        <Typography variant="body2" fontWeight={600}>
+                          {d.nombre}
+                        </Typography>
+                      </Stack>
+                    </TableCell>
+                    <TableCell align="center">
+                      <Typography variant="body2" fontWeight={700}>
+                        {conteoVehiculos[d.id] || 0}
+                      </Typography>
+                    </TableCell>
+                    <TableCell>{d.responsable_nombre || '—'}</TableCell>
+                    <TableCell align="right">
+                      <IconButton
+                        size="small"
+                        onClick={() => {
+                          setDependenciaEditar(d);
+                          setDialogoAbierto(true);
                         }}
                       >
-                        <BusinessIcon fontSize="small" sx={{ color: 'primary.main' }} />
-                      </Box>
-                      <Typography variant="body2" fontWeight={600}>
-                        {d.nombre}
-                      </Typography>
-                    </Stack>
-                  </TableCell>
-                  <TableCell align="center">
-                    <Typography variant="body2" fontWeight={700}>
-                      {conteoVehiculos[d.id] || 0}
-                    </Typography>
-                  </TableCell>
-                  <TableCell>{d.responsable_nombre || '—'}</TableCell>
-                  <TableCell align="right">
-                    <IconButton
-                      size="small"
-                      onClick={() => {
-                        setDependenciaEditar(d);
-                        setDialogoAbierto(true);
-                      }}
-                    >
-                      <EditIcon fontSize="small" />
-                    </IconButton>
-                  </TableCell>
-                </TableRow>
-              ))}
+                        <EditIcon fontSize="small" />
+                      </IconButton>
+                      <IconButton
+                        size="small"
+                        sx={{ color: 'error.main' }}
+                        onClick={() => eliminar(d)}
+                      >
+                        <DeleteOutlineIcon fontSize="small" />
+                      </IconButton>
+                    </TableCell>
+                  </TableRow>
+                ))}
             </TableBody>
           </Table>
         </Box>
