@@ -11,6 +11,7 @@ import VisibilityIcon from '@mui/icons-material/VisibilityOutlined';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import CalendarMonthOutlinedIcon from '@mui/icons-material/CalendarMonthOutlined';
 import AppShell from '@/components/layout/app-shell';
+import ConfirmDialog from '@/components/ui/confirm-dialog';
 import { programacionesService } from '@/lib/services';
 import { ApiError } from '@/lib/api-client';
 import { useAuth } from '@/contexts/auth-context';
@@ -27,6 +28,8 @@ export default function ProgramacionesPage() {
   const [lista, setLista] = useState<Programacion[]>([]);
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [programacionEliminar, setProgramacionEliminar] = useState<Programacion | null>(null);
+  const [eliminando, setEliminando] = useState(false);
 
   const puedeCrear = usuario && ['Administrador', 'Dependencia'].includes(usuario.rol_nombre);
   const puedeEliminar = usuario?.rol_nombre === 'Administrador';
@@ -42,13 +45,17 @@ export default function ProgramacionesPage() {
 
   useEffect(() => { cargar(); }, [cargar]);
 
-  const eliminar = async (id: number) => {
-    if (!confirm('¿Eliminar esta programación?')) return;
+  const confirmarEliminar = async () => {
+    if (!programacionEliminar) return;
+    setEliminando(true);
     try {
-      await programacionesService.eliminar(id);
+      await programacionesService.eliminar(programacionEliminar.id);
+      setProgramacionEliminar(null);
       cargar();
     } catch (err) {
       setError(err instanceof ApiError ? err.message : 'No se pudo eliminar');
+    } finally {
+      setEliminando(false);
     }
   };
 
@@ -141,7 +148,7 @@ export default function ProgramacionesPage() {
                         <VisibilityIcon fontSize="small" />
                       </IconButton>
                       {puedeEliminar && (
-                        <IconButton size="small" onClick={() => eliminar(p.id)} sx={{ color: 'error.main' }}>
+                        <IconButton size="small" onClick={() => setProgramacionEliminar(p)} sx={{ color: 'error.main' }}>
                           <DeleteOutlineIcon fontSize="small" />
                         </IconButton>
                       )}
@@ -153,6 +160,15 @@ export default function ProgramacionesPage() {
           </Table>
         )}
       </Paper>
+
+      <ConfirmDialog
+        abierto={!!programacionEliminar}
+        titulo="Eliminar programación"
+        mensaje={`¿Eliminar la programación del ${programacionEliminar ? formatFecha(programacionEliminar.fecha) : ''}? Esta acción no se puede deshacer.`}
+        cargando={eliminando}
+        onConfirmar={confirmarEliminar}
+        onCancelar={() => setProgramacionEliminar(null)}
+      />
     </AppShell>
   );
 }

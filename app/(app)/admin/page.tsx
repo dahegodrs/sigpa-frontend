@@ -38,6 +38,7 @@ import AppShell from '@/components/layout/app-shell';
 import UsuarioRolDialog from '@/components/admin/usuario-rol-dialog';
 import DependenciaDialog from '@/components/admin/dependencia-dialog';
 import InvitarUsuarioDialog from '@/components/admin/invitar-usuario-dialog';
+import ConfirmDialog from '@/components/ui/confirm-dialog';
 import { useCatalogos } from '@/lib/hooks/use-catalogos';
 import { usuariosService, dependenciasService, vehiculosService, listasService, tiposVehiculoService } from '@/lib/services';
 import type { ListaConfiguracion, TipoVehiculoCatalogo } from '@/types';
@@ -301,6 +302,8 @@ function TabDependencias() {
   const [error, setError] = useState<string | null>(null);
   const [dependenciaEditar, setDependenciaEditar] = useState<Dependencia | null>(null);
   const [dialogoAbierto, setDialogoAbierto] = useState(false);
+  const [dependenciaEliminar, setDependenciaEliminar] = useState<Dependencia | null>(null);
+  const [eliminando, setEliminando] = useState(false);
 
   const cargar = useCallback(() => {
     setCargando(true);
@@ -322,17 +325,21 @@ function TabDependencias() {
     cargar();
   }, [cargar]);
 
-  const eliminar = async (d: Dependencia) => {
+  const confirmarEliminar = async () => {
+    if (!dependenciaEliminar) return;
     // Borrado lógico en el backend (activo = FALSE) — la dependencia deja
     // de listarse y de ofrecerse en combos, pero se conserva en la base de
     // datos para no romper vehículos o históricos que ya la referencian.
-    if (!confirm(`¿Eliminar la dependencia "${d.nombre}"? Esta acción no se puede deshacer desde la interfaz.`)) return;
+    setEliminando(true);
     setError(null);
     try {
-      await dependenciasService.eliminar(d.id);
+      await dependenciasService.eliminar(dependenciaEliminar.id);
+      setDependenciaEliminar(null);
       cargar();
     } catch (err) {
       setError(err instanceof ApiError ? err.message : 'No se pudo eliminar la dependencia');
+    } finally {
+      setEliminando(false);
     }
   };
 
@@ -418,7 +425,7 @@ function TabDependencias() {
                       <IconButton
                         size="small"
                         sx={{ color: 'error.main' }}
-                        onClick={() => eliminar(d)}
+                        onClick={() => setDependenciaEliminar(d)}
                       >
                         <DeleteOutlineIcon fontSize="small" />
                       </IconButton>
@@ -438,6 +445,15 @@ function TabDependencias() {
           setDialogoAbierto(false);
           cargar();
         }}
+      />
+
+      <ConfirmDialog
+        abierto={!!dependenciaEliminar}
+        titulo="Eliminar dependencia"
+        mensaje={`¿Eliminar la dependencia "${dependenciaEliminar?.nombre}"? Esta acción no se puede deshacer desde la interfaz.`}
+        cargando={eliminando}
+        onConfirmar={confirmarEliminar}
+        onCancelar={() => setDependenciaEliminar(null)}
       />
     </Paper>
   );

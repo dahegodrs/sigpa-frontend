@@ -212,11 +212,21 @@ function PrintView({ prog }: { prog: Programacion }) {
             const bgVac = item.es_vacaciones ? '#FFF3CD' : '#fff';
             return (
               <tr key={i} style={{ backgroundColor: bgVac }}>
-                {i === 0 && (
-                  <td rowSpan={(prog.items || []).length} style={{ ...tdStyle, textAlign: 'center', fontWeight: 'bold', verticalAlign: 'middle', width: '13%', backgroundColor: '#fff', whiteSpace: 'nowrap' }}>
-                    {fechaDosLineas.map((linea, wi) => <div key={wi}>{linea}</div>)}
-                  </td>
-                )}
+                {/*
+                  Nota técnica: NO se usa rowSpan para combinar la celda de
+                  FECHA en una sola columna que abarque todas las filas.
+                  html2canvas (librería usada para generar el PDF) tiene un
+                  bug conocido con celdas rowSpan: el contenido se pierde o
+                  no se renderiza al capturar la tabla, dejando la columna
+                  FECHA completamente vacía en el PDF final. Por eso la
+                  fecha se muestra únicamente en la celda de la primera fila
+                  (sin combinar), y el resto queda vacía pero con su propio
+                  borde — visualmente casi idéntico al diseño original, pero
+                  garantizando que el texto se capture correctamente.
+                */}
+                <td style={{ ...tdStyle, textAlign: 'center', fontWeight: 'bold', verticalAlign: 'middle', width: '13%', backgroundColor: '#fff', whiteSpace: 'nowrap' }}>
+                  {i === 0 && fechaDosLineas.map((linea, wi) => <div key={wi}>{linea}</div>)}
+                </td>
                 <td style={{ ...tdStyle, textAlign: 'center', fontWeight: 600 }}>{item.vehiculo_placa || ''}</td>
                 <td style={{ ...tdStyle, fontWeight: item.es_vacaciones ? 700 : 400 }}>{item.conductor}</td>
                 <td style={{ ...tdStyle, fontWeight: item.es_vacaciones ? 700 : 400 }}>{item.dependencia}</td>
