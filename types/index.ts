@@ -270,6 +270,12 @@ export interface Programacion {
   creado_por_nombre?: string;
   fecha_creacion: string;
   fecha_actualizacion: string;
+  // total_items/total_programados se calculan en el listado (GET
+  // /programaciones) — total_programados es el conteo que se muestra en
+  // la tabla, ya que refleja cuántas filas quedaron confirmadas para la
+  // planilla oficial (las sin marcar existen pero no cuentan aquí).
+  total_items?: number;
+  total_programados?: number;
   items?: ProgramacionItem[];
 }
 

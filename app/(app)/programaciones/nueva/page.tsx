@@ -27,10 +27,11 @@ const FILA_VACIA = (): ProgramacionItem => ({
   hora_finalizacion: 'DISPONIBLE PATIO',
   actividad: 'DISPONIBLE PATIO',
   es_vacaciones: false,
-  // Por defecto TRUE: la fila se incluye en la planilla final tan pronto se
-  // crea, salvo que el usuario la desmarque (ej. mientras aún no confirma
-  // los datos exactos de esa fila).
-  programado: true,
+  // Por defecto FALSE: el usuario debe marcar explícitamente cada fila que
+  // quiere incluir en la planilla oficial. Esto refleja el flujo real: las
+  // solicitudes de vehículos van llegando durante el día y solo se
+  // "programan" (confirman) las que ya están decididas.
+  programado: false,
   vehiculo_id: null,
 });
 
@@ -57,11 +58,17 @@ export default function NuevaProgramacionPage() {
       listasService.listar('actividad'),
       vehiculosService.listar({ page_size: 200 }),
       dependenciasService.listar(),
-    ]).then(([conds, acts, vehs, deps]) => {
+      // "Vehículos de patio" es la lista configurada en Administración que
+      // define qué placas del parque automotor deben ofrecerse en el
+      // combo de esta pantalla — no todo el parque automotor, solo el
+      // subconjunto habilitado para programación diaria.
+      listasService.listar('patio_vehiculo'),
+    ]).then(([conds, acts, vehs, deps, patio]) => {
       setConductores(conds || []);
       setActividades(acts || []);
-      setVehiculos(vehs.data || []);
       setDependencias(deps || []);
+      const placasPatio = new Set((patio || []).filter((p) => p.activo).map((p) => p.nombre.toUpperCase()));
+      setVehiculos((vehs.data || []).filter((v) => placasPatio.has(v.placa.toUpperCase())));
     }).catch(() => {});
   }, []);
 
@@ -112,7 +119,7 @@ export default function NuevaProgramacionPage() {
           hora_finalizacion: item.hora_finalizacion || 'DISPONIBLE PATIO',
           actividad: item.actividad,
           es_vacaciones: item.es_vacaciones,
-          programado: true,
+          programado: false,
         }))
       );
     } catch (err) {
@@ -131,10 +138,12 @@ export default function NuevaProgramacionPage() {
       const result = await programacionesService.crear({
         fecha,
         observaciones: observaciones || undefined,
-        // Solo se guardan/exportan las filas marcadas como "Programado" —
-        // las que quedaron sin marcar se conservan como borrador en la UI
-        // pero no forman parte de la planilla oficial.
-        items: filas.filter((f) => f.programado).map((f, i) => ({ ...f, orden: i })),
+        // Se guardan TODAS las filas (marcadas o no) — "programado" solo
+        // controla qué aparece en el PDF/planilla oficial, no si la fila
+        // se conserva en el sistema. Así el usuario puede ir agregando
+        // solicitudes de vehículos durante el día sin perder las que aún
+        // no ha confirmado.
+        items: filas.map((f, i) => ({ ...f, orden: i })),
       });
       router.push(`/programaciones/${result.id}`);
     } catch (err) {

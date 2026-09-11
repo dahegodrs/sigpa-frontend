@@ -32,6 +32,13 @@ export default function ProgramacionDetallePage() {
   const [error, setError] = useState<string | null>(null);
   const [generandoPDF, setGenerandoPDF] = useState(false);
 
+  // El backend devuelve TODAS las filas de la programación (incluidas las
+  // que aún no fueron marcadas como "programado"), porque no se deben
+  // perder al guardar. Esta vista de detalle — que alimenta tanto la tabla
+  // en pantalla como el PDF oficial — solo debe mostrar las confirmadas.
+  const itemsProgramados = (prog?.items || []).filter((it) => it.programado);
+  const progParaImprimir = prog ? { ...prog, items: itemsProgramados } : null;
+
   const puedeEditar = usuario && ['Administrador', 'Dependencia'].includes(usuario.rol_nombre);
 
   const cargar = useCallback(() => {
@@ -115,7 +122,13 @@ export default function ProgramacionDetallePage() {
                     </Box>
                   </Box>
                   <Box component="tbody">
-                    {(prog.items || []).map((item, i) => (
+                    {itemsProgramados.length === 0 ? (
+                      <Box component="tr">
+                        <Box component="td" sx={{ p: 3, textAlign: 'center', color: 'text.secondary', border: '1px solid #E0E0E0' }} colSpan={7}>
+                          Ningún registro está marcado como "Programado" todavía. Marca el check en las filas que quieras incluir en la planilla oficial.
+                        </Box>
+                      </Box>
+                    ) : itemsProgramados.map((item, i) => (
                       <Box component="tr" key={i} sx={{ bgcolor: item.es_vacaciones ? '#FFF8E1' : i % 2 === 0 ? '#fff' : '#F9F9FA' }}>
                         {[item.vehiculo_placa || '—', item.conductor, item.dependencia, item.destino, item.hora_salida_punto, item.hora_finalizacion, item.actividad].map((val, ci) => (
                           <Box component="td" key={ci} sx={{ p: 1, fontSize: '0.8rem', border: '1px solid #E0E0E0', textAlign: ci === 0 ? 'center' : 'left', fontWeight: item.es_vacaciones ? 700 : 400 }}>
@@ -130,8 +143,8 @@ export default function ProgramacionDetallePage() {
             </Paper>
           </Box>
 
-          {/* ── Vista de impresión (formato 15-FR-36 exacto) ── */}
-          <PrintView prog={prog} />
+          {/* ── Vista de impresión (formato 15-FR-36 exacto) — solo filas programadas ── */}
+          {progParaImprimir && <PrintView prog={progParaImprimir} />}
         </>
       )}
 
@@ -189,7 +202,7 @@ function PrintView({ prog }: { prog: Programacion }) {
             return (
               <tr key={i} style={{ backgroundColor: bgVac }}>
                 {i === 0 && (
-                  <td rowSpan={prog.items!.length} style={{ ...tdStyle, textAlign: 'center', fontWeight: 'bold', verticalAlign: 'middle', width: '11%', backgroundColor: '#fff' }}>
+                  <td rowSpan={(prog.items || []).length} style={{ ...tdStyle, textAlign: 'center', fontWeight: 'bold', verticalAlign: 'middle', width: '11%', backgroundColor: '#fff' }}>
                     {fechaLarga.split(' ').map((w, wi) => <span key={wi} style={{ display: 'block' }}>{w}</span>)}
                   </td>
                 )}

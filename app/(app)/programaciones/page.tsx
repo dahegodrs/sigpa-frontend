@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   Box, Paper, Typography, CircularProgress, Alert, Stack, Button,
-  Table, TableHead, TableBody, TableRow, TableCell, IconButton, Chip,
+  Table, TableHead, TableBody, TableRow, TableCell, IconButton, Chip, Tooltip,
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import VisibilityIcon from '@mui/icons-material/VisibilityOutlined';
@@ -118,7 +118,14 @@ export default function ProgramacionesPage() {
                     </Stack>
                   </TableCell>
                   <TableCell align="center">
-                    <Chip label={`${p.items?.length ?? '—'} filas`} size="small" variant="outlined" />
+                    <Tooltip title={`${p.total_items ?? 0} fila(s) registrada(s) en total, ${p.total_programados ?? 0} marcada(s) como Programado`}>
+                      <Chip
+                        label={`${p.total_programados ?? 0} programado${(p.total_programados ?? 0) !== 1 ? 's' : ''}`}
+                        size="small"
+                        color={(p.total_programados ?? 0) > 0 ? 'success' : 'default'}
+                        variant="outlined"
+                      />
+                    </Tooltip>
                   </TableCell>
                   <TableCell>
                     <Typography variant="body2">{p.creado_por_nombre || '—'}</Typography>
