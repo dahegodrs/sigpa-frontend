@@ -13,6 +13,7 @@ import type {
   Organizacion,
   OrganizacionTema,
   Programacion,
+  TipoVehiculoCatalogo,
   Usuario,
   Vehiculo,
   VehiculoFiltros,
@@ -113,6 +114,14 @@ export const listasService = {
   crear: (data: { tipo: string; nombre: string; orden?: number }) => api.post<{ id: number }>('/listas', data),
   actualizar: (id: number, data: { nombre: string; orden: number; activo: boolean }) => api.put(`/listas/${id}`, data),
   eliminar: (id: number) => api.delete(`/listas/${id}`),
+};
+
+export const tiposVehiculoService = {
+  // Trae activos e inactivos, para el panel de Administración → Listas.
+  listarTodos: () => api.get<TipoVehiculoCatalogo[]>('/catalogos/tipos-vehiculo/todos'),
+  crear: (nombre: string) => api.post<{ id: number }>('/catalogos/tipos-vehiculo', { nombre }),
+  actualizar: (id: number, nombre: string, activo: boolean) =>
+    api.put(`/catalogos/tipos-vehiculo/${id}`, { nombre, activo }),
 };
 
 export const programacionesService = {

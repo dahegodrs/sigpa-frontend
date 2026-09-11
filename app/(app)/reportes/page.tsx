@@ -303,7 +303,7 @@ export default function ReportesPage() {
             </ChartCard>
           </Grid>
           <Grid item xs={12} md={6}>
-            <ChartCard titulo="Proyección de vencimientos (SOAT / Tecno. / Póliza)">
+            <ChartCard titulo="Proyección de vencimientos (SOAT / Tecnomecánica)">
               {datos.vencimientos_por_mes_tipo?.length ? (
                 <ResponsiveContainer>
                   <BarChart data={datos.vencimientos_por_mes_tipo}>
@@ -314,7 +314,6 @@ export default function ReportesPage() {
                     <Legend wrapperStyle={{ fontSize: 11 }} />
                     <Bar dataKey="soat" name="SOAT" fill="#EF4444" radius={[2, 2, 0, 0]} />
                     <Bar dataKey="tecnomecanica" name="Tecno." fill="#F59E0B" radius={[2, 2, 0, 0]} />
-                    <Bar dataKey="poliza" name="Póliza" fill="#10B981" radius={[2, 2, 0, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
               ) : <SinDatos />}

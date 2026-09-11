@@ -26,7 +26,7 @@ import KpiCard from '@/components/dashboard/kpi-card';
 import AlertasPopup from '@/components/alertas/alertas-popup';
 import {
   GraficoPorEstado, GraficoPorTipo,
-  GraficoVencimientosSOAT, GraficoVencimientosTecno, GraficoVencimientosPoliza,
+  GraficoVencimientosSOAT, GraficoVencimientosTecno,
   PanelAlertasRecientes, PanelDependenciasAlertas,
   PanelActividadReciente,
 } from '@/components/dashboard/dashboard-charts';
@@ -87,10 +87,6 @@ function IconoDocVencido({ color }: { color: string }) {
 
 function IconoPorVencer({ color }: { color: string }) {
   return <HourglassBottomRoundedIcon sx={{ color, fontSize: 22 }} />;
-}
-
-function IconoPolizaVencida({ color }: { color: string }) {
-  return <GppBadRoundedIcon sx={{ color, fontSize: 22 }} />;
 }
 
 function IconoSaludDocumental({ color }: { color: string }) {
@@ -206,9 +202,6 @@ export default function DashboardPage() {
               <KpiCard titulo="Tecno. por vencer" valor={datos.kpis.tecno_proximos_a_vencer} iconePersonalizado={<IconoPorVencer color={COLOR_NARANJA_ALERTA} />} color={COLOR_NARANJA_ALERTA} href="/documentos?estado_documento=Proximo_a_vencer&tipo_documento_id=2" />
             </Grid>
             <Grid item xs={6} sm={4} md={2}>
-              <KpiCard titulo="Pólizas vencidas" valor={datos.kpis.polizas_vencidas} iconePersonalizado={<IconoPolizaVencida color={COLOR_ROJO_FUNZA} />} color={COLOR_ROJO_FUNZA} href="/documentos?estado_documento=Vencido&tipo_documento_id=3" />
-            </Grid>
-            <Grid item xs={6} sm={4} md={2}>
               <KpiCard
                 titulo="Índice de salud"
                 valor={`${Math.round(saludPct)}%`}
@@ -226,9 +219,8 @@ export default function DashboardPage() {
             <Grid item xs={12} md={8}><GraficoPorTipo datos={datos} /></Grid>
           </Grid>
           <Grid container spacing={2} sx={{ mb: 2 }}>
-            <Grid item xs={12} md={4}><GraficoVencimientosSOAT datos={datos} /></Grid>
-            <Grid item xs={12} md={4}><GraficoVencimientosTecno datos={datos} /></Grid>
-            <Grid item xs={12} md={4}><GraficoVencimientosPoliza datos={datos} /></Grid>
+            <Grid item xs={12} md={6}><GraficoVencimientosSOAT datos={datos} /></Grid>
+            <Grid item xs={12} md={6}><GraficoVencimientosTecno datos={datos} /></Grid>
           </Grid>
 
           {/* ── Alertas y Actividad ── */}

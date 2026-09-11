@@ -6,13 +6,14 @@ import {
   Box, Paper, Typography, CircularProgress, Alert, Stack, Button, Chip,
 } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
-import PrintOutlinedIcon from '@mui/icons-material/PrintOutlined';
+import PictureAsPdfOutlinedIcon from '@mui/icons-material/PictureAsPdfOutlined';
 import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
 import Image from 'next/image';
 import AppShell from '@/components/layout/app-shell';
 import { programacionesService } from '@/lib/services';
 import { ApiError } from '@/lib/api-client';
 import { useAuth } from '@/contexts/auth-context';
+import { generarPDFDesdeElemento } from '@/lib/generar-pdf';
 import type { Programacion } from '@/types';
 
 function formatFechaLarga(fecha: string): string {
@@ -29,6 +30,7 @@ export default function ProgramacionDetallePage() {
   const [prog, setProg] = useState<Programacion | null>(null);
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [generandoPDF, setGenerandoPDF] = useState(false);
 
   const puedeEditar = usuario && ['Administrador', 'Dependencia'].includes(usuario.rol_nombre);
 
@@ -56,8 +58,25 @@ export default function ProgramacionDetallePage() {
             </Button>
           )}
           {prog && (
-            <Button variant="contained" size="small" startIcon={<PrintOutlinedIcon />} onClick={() => window.print()}>
-              Imprimir / PDF
+            <Button
+              variant="contained"
+              size="small"
+              startIcon={generandoPDF ? <CircularProgress size={14} color="inherit" /> : <PictureAsPdfOutlinedIcon />}
+              disabled={generandoPDF}
+              onClick={async () => {
+                setGenerandoPDF(true);
+                try {
+                  await generarPDFDesdeElemento('programacion-print-area', `programacion_${prog.fecha}.pdf`);
+                } catch {
+                  // La generación de PDF es una conveniencia — si falla no
+                  // bloqueamos al usuario con un error intrusivo, solo se
+                  // deja de descargar el archivo.
+                } finally {
+                  setGenerandoPDF(false);
+                }
+              }}
+            >
+              {generandoPDF ? 'Generando…' : 'Generar PDF'}
             </Button>
           )}
         </Stack>
@@ -88,7 +107,7 @@ export default function ProgramacionDetallePage() {
                 <Box component="table" sx={{ width: '100%', borderCollapse: 'collapse', minWidth: 900 }}>
                   <Box component="thead">
                     <Box component="tr" sx={{ bgcolor: '#1A1A2E' }}>
-                      {['VEHÍCULO', 'CONDUCTOR', 'DEPENDENCIA', 'DESTINO', 'HORA DE SALIDA Y PUNTO DE ENCUENTRO', 'ACTIVIDAD'].map((h) => (
+                      {['VEHÍCULO', 'CONDUCTOR', 'DEPENDENCIA', 'DESTINO', 'HORA DE SERVICIO Y PUNTO', 'HORA DE FINALIZACIÓN', 'ACTIVIDAD'].map((h) => (
                         <Box component="th" key={h} sx={{ p: 1.25, color: '#fff', fontWeight: 700, fontSize: '0.72rem', textAlign: 'center', letterSpacing: '0.06em', border: '1px solid #333' }}>
                           {h}
                         </Box>
@@ -98,7 +117,7 @@ export default function ProgramacionDetallePage() {
                   <Box component="tbody">
                     {(prog.items || []).map((item, i) => (
                       <Box component="tr" key={i} sx={{ bgcolor: item.es_vacaciones ? '#FFF8E1' : i % 2 === 0 ? '#fff' : '#F9F9FA' }}>
-                        {[item.vehiculo_placa || '—', item.conductor, item.dependencia, item.destino, item.hora_salida_punto, item.actividad].map((val, ci) => (
+                        {[item.vehiculo_placa || '—', item.conductor, item.dependencia, item.destino, item.hora_salida_punto, item.hora_finalizacion, item.actividad].map((val, ci) => (
                           <Box component="td" key={ci} sx={{ p: 1, fontSize: '0.8rem', border: '1px solid #E0E0E0', textAlign: ci === 0 ? 'center' : 'left', fontWeight: item.es_vacaciones ? 700 : 400 }}>
                             {val}
                           </Box>
@@ -134,7 +153,7 @@ function PrintView({ prog }: { prog: Programacion }) {
   const fechaLarga = formatFechaLarga(prog.fecha);
 
   return (
-    <div className="print-area" style={{ fontFamily: 'Arial, sans-serif', fontSize: '10pt', color: '#000' }}>
+    <div id="programacion-print-area" className="print-area" style={{ fontFamily: 'Arial, sans-serif', fontSize: '10pt', color: '#000' }}>
       {/* Encabezado */}
       <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: 4 }}>
         <tbody>
@@ -159,7 +178,8 @@ function PrintView({ prog }: { prog: Programacion }) {
             <th style={thStyle}>CONDUCTOR</th>
             <th style={thStyle}>DEPENDENCIA</th>
             <th style={thStyle}>DESTINO</th>
-            <th style={{ ...thStyle, width: '18%' }}>HORA DE SALIDA Y PUNTO DE ENCUENTRO</th>
+            <th style={{ ...thStyle, width: '15%' }}>HORA DE SERVICIO Y PUNTO</th>
+            <th style={{ ...thStyle, width: '15%' }}>HORA DE FINALIZACIÓN</th>
             <th style={thStyle}>ACTIVIDAD</th>
           </tr>
         </thead>
@@ -178,6 +198,7 @@ function PrintView({ prog }: { prog: Programacion }) {
                 <td style={{ ...tdStyle, fontWeight: item.es_vacaciones ? 700 : 400 }}>{item.dependencia}</td>
                 <td style={{ ...tdStyle, fontWeight: item.es_vacaciones ? 700 : 400 }}>{item.destino}</td>
                 <td style={{ ...tdStyle, fontWeight: item.es_vacaciones ? 700 : 400 }}>{item.hora_salida_punto}</td>
+                <td style={{ ...tdStyle, fontWeight: item.es_vacaciones ? 700 : 400 }}>{item.hora_finalizacion}</td>
                 <td style={{ ...tdStyle, fontWeight: item.es_vacaciones ? 700 : 400 }}>{item.actividad}</td>
               </tr>
             );

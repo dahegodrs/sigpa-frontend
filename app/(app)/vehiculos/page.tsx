@@ -188,7 +188,7 @@ function VehiculosContent() {
                     <TableCell>Responsable</TableCell>
                     <TableCell>Estado</TableCell>
                     <TableCell align="center">
-                      <Tooltip title="SOAT · Tecnomecánica · Seguro"><span>Docs.</span></Tooltip>
+                      <Tooltip title="SOAT · Tecnomecánica"><span>Docs.</span></Tooltip>
                     </TableCell>
                     <TableCell align="right" sx={{ width: 56 }}></TableCell>
                   </TableRow>
@@ -211,7 +211,6 @@ function VehiculosContent() {
                         <Stack direction="row" spacing={1} justifyContent="center" alignItems="center">
                           <DocEstadoDot estado={v.soat_estado} />
                           <DocEstadoDot estado={v.tecno_estado} />
-                          <DocEstadoDot estado={v.poliza_estado} />
                         </Stack>
                       </TableCell>
                       <TableCell align="right" onClick={(e) => { e.stopPropagation(); router.push(`/vehiculos/${v.id}`); }}>

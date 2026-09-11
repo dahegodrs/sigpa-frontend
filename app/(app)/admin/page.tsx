@@ -38,8 +38,8 @@ import UsuarioRolDialog from '@/components/admin/usuario-rol-dialog';
 import DependenciaDialog from '@/components/admin/dependencia-dialog';
 import InvitarUsuarioDialog from '@/components/admin/invitar-usuario-dialog';
 import { useCatalogos } from '@/lib/hooks/use-catalogos';
-import { usuariosService, dependenciasService, vehiculosService, listasService } from '@/lib/services';
-import type { ListaConfiguracion } from '@/types';
+import { usuariosService, dependenciasService, vehiculosService, listasService, tiposVehiculoService } from '@/lib/services';
+import type { ListaConfiguracion, TipoVehiculoCatalogo } from '@/types';
 import { ApiError } from '@/lib/api-client';
 import type { Usuario, Dependencia } from '@/types';
 
@@ -422,28 +422,42 @@ function TabDependencias() {
 }
 
 // ── Tipos de lista disponibles ────────────────────────────────────────────
+// "tipo_vehiculo" es un caso especial: no vive en la tabla listas_configurables
+// (esa tabla es genérica para conductores/actividades/etc.), sino en la tabla
+// real tipos_vehiculo, porque los vehículos la referencian con una FK. Por
+// eso se maneja con su propio servicio (tiposVehiculoService) en vez de
+// listasService, pero comparte la misma UI de selector + tabla para que la
+// experiencia sea consistente para el Administrador.
 const TIPOS_LISTA = [
   { value: 'conductor', label: '🚗 Conductores' },
   { value: 'actividad', label: '⚡ Actividades' },
   { value: 'patio_vehiculo', label: '🅿️ Vehículos de patio' },
+  { value: 'tipo_vehiculo', label: '🚙 Tipos de vehículo' },
 ];
 
 function TabListas() {
   const theme = useTheme();
   const [tipoSeleccionado, setTipoSeleccionado] = useState('conductor');
   const [items, setItems] = useState<ListaConfiguracion[]>([]);
+  const [tiposVehiculo, setTiposVehiculo] = useState<TipoVehiculoCatalogo[]>([]);
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [nuevoNombre, setNuevoNombre] = useState('');
   const [guardando, setGuardando] = useState(false);
   const [itemEditar, setItemEditar] = useState<ListaConfiguracion | null>(null);
+  const [tipoVehiculoEditar, setTipoVehiculoEditar] = useState<TipoVehiculoCatalogo | null>(null);
   const [nombreEditar, setNombreEditar] = useState('');
+
+  const esTipoVehiculo = tipoSeleccionado === 'tipo_vehiculo';
 
   const cargar = useCallback(() => {
     setCargando(true);
     setError(null);
-    listasService.listar()
-      .then((res) => setItems(res || []))
+    Promise.all([listasService.listar(), tiposVehiculoService.listarTodos()])
+      .then(([listaItems, listaTipos]) => {
+        setItems(listaItems || []);
+        setTiposVehiculo(listaTipos || []);
+      })
       .catch((err) => setError(err instanceof ApiError ? err.message : 'No se pudieron cargar las listas'))
       .finally(() => setCargando(false));
   }, []);
@@ -456,7 +470,11 @@ function TabListas() {
     if (!nuevoNombre.trim()) return;
     setGuardando(true);
     try {
-      await listasService.crear({ tipo: tipoSeleccionado, nombre: nuevoNombre.trim().toUpperCase(), orden: itemsFiltrados.length });
+      if (esTipoVehiculo) {
+        await tiposVehiculoService.crear(nuevoNombre.trim());
+      } else {
+        await listasService.crear({ tipo: tipoSeleccionado, nombre: nuevoNombre.trim().toUpperCase(), orden: itemsFiltrados.length });
+      }
       setNuevoNombre('');
       cargar();
     } catch (err) {
@@ -471,12 +489,24 @@ function TabListas() {
     } catch (err) { setError(err instanceof ApiError ? err.message : 'No se pudo actualizar'); }
   };
 
+  const alternarActivoTipoVehiculo = async (tv: TipoVehiculoCatalogo) => {
+    try {
+      await tiposVehiculoService.actualizar(tv.id, tv.nombre, !tv.activo);
+      cargar();
+    } catch (err) { setError(err instanceof ApiError ? err.message : 'No se pudo actualizar'); }
+  };
+
   const guardarEdicion = async () => {
-    if (!itemEditar || !nombreEditar.trim()) return;
+    if (!nombreEditar.trim()) return;
     setGuardando(true);
     try {
-      await listasService.actualizar(itemEditar.id, { nombre: nombreEditar.trim().toUpperCase(), orden: itemEditar.orden, activo: itemEditar.activo });
-      setItemEditar(null);
+      if (esTipoVehiculo && tipoVehiculoEditar) {
+        await tiposVehiculoService.actualizar(tipoVehiculoEditar.id, nombreEditar.trim(), tipoVehiculoEditar.activo ?? true);
+        setTipoVehiculoEditar(null);
+      } else if (itemEditar) {
+        await listasService.actualizar(itemEditar.id, { nombre: nombreEditar.trim().toUpperCase(), orden: itemEditar.orden, activo: itemEditar.activo });
+        setItemEditar(null);
+      }
       setNombreEditar('');
       cargar();
     } catch (err) {
@@ -507,7 +537,7 @@ function TabListas() {
         <Stack direction="row" spacing={1.5} sx={{ p: 2, borderBottom: '1px solid', borderColor: 'divider' }}>
           <TextField
             size="small"
-            placeholder={`Nuevo ${tipoSeleccionado}…`}
+            placeholder={esTipoVehiculo ? 'Nuevo tipo de vehículo…' : `Nuevo ${tipoSeleccionado}…`}
             value={nuevoNombre}
             onChange={(e) => setNuevoNombre(e.target.value)}
             onKeyDown={(e) => { if (e.key === 'Enter') agregar(); }}
@@ -520,6 +550,49 @@ function TabListas() {
 
         {cargando ? (
           <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}><CircularProgress /></Box>
+        ) : esTipoVehiculo ? (
+          tiposVehiculo.length === 0 ? (
+            <Box sx={{ py: 4, textAlign: 'center' }}>
+              <Typography variant="body2" color="text.secondary">No hay tipos de vehículo todavía.</Typography>
+            </Box>
+          ) : (
+            <Table>
+              <TableHead>
+                <TableRow>
+                  <TableCell>Nombre</TableCell>
+                  <TableCell align="center">Activo</TableCell>
+                  <TableCell align="right">Editar</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {tiposVehiculo.map((tv) => (
+                  <TableRow key={tv.id} hover>
+                    <TableCell>
+                      {tipoVehiculoEditar?.id === tv.id ? (
+                        <Stack direction="row" spacing={1}>
+                          <TextField size="small" value={nombreEditar} onChange={(e) => setNombreEditar(e.target.value)} sx={{ flex: 1 }} autoFocus />
+                          <Button size="small" variant="contained" onClick={guardarEdicion} disabled={guardando}>Guardar</Button>
+                          <Button size="small" onClick={() => { setTipoVehiculoEditar(null); setNombreEditar(''); }}>Cancelar</Button>
+                        </Stack>
+                      ) : (
+                        <Typography variant="body2" fontWeight={tv.activo ? 500 : 400} sx={{ color: tv.activo ? 'text.primary' : 'text.disabled' }}>
+                          {tv.nombre}
+                        </Typography>
+                      )}
+                    </TableCell>
+                    <TableCell align="center">
+                      <Switch checked={!!tv.activo} onChange={() => alternarActivoTipoVehiculo(tv)} size="small" />
+                    </TableCell>
+                    <TableCell align="right">
+                      <IconButton size="small" onClick={() => { setTipoVehiculoEditar(tv); setNombreEditar(tv.nombre); }}>
+                        <EditIcon fontSize="small" />
+                      </IconButton>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )
         ) : itemsFiltrados.length === 0 ? (
           <Box sx={{ py: 4, textAlign: 'center' }}>
             <Typography variant="body2" color="text.secondary">No hay items en esta lista todavía.</Typography>

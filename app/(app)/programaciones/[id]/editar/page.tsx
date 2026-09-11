@@ -12,6 +12,7 @@ import AddIcon from '@mui/icons-material/Add';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import SaveOutlinedIcon from '@mui/icons-material/SaveOutlined';
 import DragIndicatorIcon from '@mui/icons-material/DragIndicator';
+import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import AppShell from '@/components/layout/app-shell';
 import { programacionesService, listasService, vehiculosService, dependenciasService } from '@/lib/services';
 import { ApiError } from '@/lib/api-client';
@@ -22,8 +23,10 @@ const FILA_VACIA = (): ProgramacionItem => ({
   dependencia: 'DISPONIBLE PATIO',
   destino: 'DISPONIBLE PATIO',
   hora_salida_punto: 'DISPONIBLE PATIO',
+  hora_finalizacion: 'DISPONIBLE PATIO',
   actividad: 'DISPONIBLE PATIO',
   es_vacaciones: false,
+  programado: true,
   vehiculo_id: null,
 });
 
@@ -56,7 +59,18 @@ export default function EditarProgramacionPage() {
     ]).then(([prog, conds, acts, vehs, deps]) => {
       setFecha(prog.fecha);
       setObservaciones(prog.observaciones || '');
-      setFilas(prog.items?.length ? prog.items : [FILA_VACIA()]);
+      // Los items ya guardados no tienen hora_finalizacion/programado si
+      // vienen de una programación creada antes de este cambio — se
+      // completan con valores por defecto para no romper la edición.
+      setFilas(
+        prog.items?.length
+          ? prog.items.map((it) => ({
+              ...it,
+              hora_finalizacion: it.hora_finalizacion || 'DISPONIBLE PATIO',
+              programado: it.programado ?? true,
+            }))
+          : [FILA_VACIA()]
+      );
       setConductores(conds || []);
       setActividades(acts || []);
       setVehiculos(vehs.data || []);
@@ -77,8 +91,13 @@ export default function EditarProgramacionPage() {
       dependencia: esVac ? 'VACACIONES' : 'DISPONIBLE PATIO',
       destino: esVac ? 'VACACIONES' : 'DISPONIBLE PATIO',
       hora_salida_punto: esVac ? 'VACACIONES' : 'DISPONIBLE PATIO',
+      hora_finalizacion: esVac ? 'VACACIONES' : 'DISPONIBLE PATIO',
       actividad: esVac ? 'VACACIONES' : 'DISPONIBLE PATIO',
     } : f));
+  };
+
+  const alternarProgramado = (idx: number, valor: boolean) => {
+    setFilas((prev) => prev.map((f, i) => i === idx ? { ...f, programado: valor } : f));
   };
 
   const agregarFila = () => setFilas((prev) => [...prev, FILA_VACIA()]);
@@ -90,7 +109,10 @@ export default function EditarProgramacionPage() {
     try {
       await programacionesService.actualizar(id, {
         fecha, observaciones: observaciones || undefined,
-        items: filas.map((f, i) => ({ ...f, orden: i })),
+        // Solo se guardan las filas marcadas como "Programado" — las que
+        // quedan sin marcar se pierden al guardar (igual que al crear),
+        // ya que la planilla oficial solo debe reflejar lo confirmado.
+        items: filas.filter((f) => f.programado).map((f, i) => ({ ...f, orden: i })),
       });
       router.push(`/programaciones/${id}`);
     } catch (err) {
@@ -121,14 +143,14 @@ export default function EditarProgramacionPage() {
           <Button size="small" startIcon={<AddIcon />} variant="outlined" onClick={agregarFila}>Agregar fila</Button>
         </Box>
         <Box sx={{ overflowX: 'auto' }}>
-          <Box sx={{ minWidth: 1000 }}>
-            <Box sx={{ display: 'grid', gridTemplateColumns: '32px 140px 1fr 1fr 1fr 1fr 1fr 48px', gap: 0.5, px: 1.5, py: 1, bgcolor: '#FAFAFA', borderBottom: '2px solid', borderColor: 'divider' }}>
-              {['', 'VEHÍCULO', 'CONDUCTOR', 'DEPENDENCIA', 'DESTINO', 'HORA / PUNTO', 'ACTIVIDAD', ''].map((h, i) => (
-                <Typography key={i} variant="caption" fontWeight={700} sx={{ textTransform: 'uppercase', letterSpacing: '0.06em', color: 'text.secondary', fontSize: '0.68rem', display: 'flex', alignItems: 'center' }}>{h}</Typography>
+          <Box sx={{ minWidth: 1150 }}>
+            <Box sx={{ display: 'grid', gridTemplateColumns: '32px 130px 1fr 1fr 1fr 1fr 1fr 1fr 70px', gap: 0.5, px: 1.5, py: 1, bgcolor: '#FAFAFA', borderBottom: '2px solid', borderColor: 'divider' }}>
+              {['', 'VEHÍCULO', 'CONDUCTOR', 'DEPENDENCIA', 'DESTINO', 'HORA DE SERVICIO Y PUNTO', 'HORA DE FINALIZACIÓN', 'ACTIVIDAD', ''].map((h, i) => (
+                <Typography key={i} variant="caption" fontWeight={700} sx={{ textTransform: 'uppercase', letterSpacing: '0.06em', color: 'text.secondary', fontSize: '0.65rem', display: 'flex', alignItems: 'center' }}>{h}</Typography>
               ))}
             </Box>
             {filas.map((fila, idx) => (
-              <Box key={idx} sx={{ display: 'grid', gridTemplateColumns: '32px 140px 1fr 1fr 1fr 1fr 1fr 48px', gap: 0.5, px: 1.5, py: 0.75, borderBottom: '1px solid', borderColor: 'divider', bgcolor: fila.es_vacaciones ? '#FFF8E1' : idx % 2 === 0 ? 'background.paper' : alpha(theme.palette.text.primary, 0.02), alignItems: 'center' }}>
+              <Box key={idx} sx={{ display: 'grid', gridTemplateColumns: '32px 130px 1fr 1fr 1fr 1fr 1fr 1fr 70px', gap: 0.5, px: 1.5, py: 0.75, borderBottom: '1px solid', borderColor: 'divider', bgcolor: fila.es_vacaciones ? '#FFF8E1' : idx % 2 === 0 ? 'background.paper' : alpha(theme.palette.text.primary, 0.02), alignItems: 'center', opacity: fila.programado ? 1 : 0.55 }}>
                 <Stack direction="row" alignItems="center"><DragIndicatorIcon sx={{ color: 'text.disabled', fontSize: 16 }} /></Stack>
                 <TextField select size="small" value={fila.vehiculo_id ?? ''} onChange={(e) => actualizarFila(idx, 'vehiculo_id', e.target.value ? Number(e.target.value) : null)} disabled={fila.es_vacaciones} sx={{ '& .MuiInputBase-root': { fontSize: 12 } }}>
                   <MenuItem value=""><em>Sin vehículo</em></MenuItem>
@@ -144,11 +166,22 @@ export default function EditarProgramacionPage() {
                 </TextField>
                 <TextField size="small" value={fila.destino} onChange={(e) => actualizarFila(idx, 'destino', e.target.value)} disabled={fila.es_vacaciones} inputProps={{ style: { fontSize: 12 } }} />
                 <TextField size="small" value={fila.hora_salida_punto} onChange={(e) => actualizarFila(idx, 'hora_salida_punto', e.target.value)} disabled={fila.es_vacaciones} inputProps={{ style: { fontSize: 12 } }} />
+                <TextField size="small" value={fila.hora_finalizacion} onChange={(e) => actualizarFila(idx, 'hora_finalizacion', e.target.value)} disabled={fila.es_vacaciones} inputProps={{ style: { fontSize: 12 } }} />
                 <TextField select size="small" value={fila.actividad} onChange={(e) => actualizarFila(idx, 'actividad', e.target.value)} disabled={fila.es_vacaciones} sx={{ '& .MuiInputBase-root': { fontSize: 12 } }}>
                   {fila.es_vacaciones && <MenuItem value="VACACIONES">VACACIONES</MenuItem>}
                   {actividades.map((a) => <MenuItem key={a.id} value={a.nombre}>{a.nombre}</MenuItem>)}
                 </TextField>
                 <Stack direction="row" alignItems="center" spacing={0.25}>
+                  <Tooltip title={fila.programado ? 'Fila incluida en la planilla final' : 'Fila NO se incluirá en la planilla final'}>
+                    <Checkbox
+                      checked={fila.programado}
+                      onChange={(e) => alternarProgramado(idx, e.target.checked)}
+                      size="small"
+                      icon={<CheckCircleOutlineIcon fontSize="small" />}
+                      checkedIcon={<CheckCircleOutlineIcon fontSize="small" />}
+                      sx={{ p: 0.5, color: 'text.disabled', '&.Mui-checked': { color: '#16A34A' } }}
+                    />
+                  </Tooltip>
                   <Tooltip title={fila.es_vacaciones ? 'Quitar vacaciones' : 'Marcar vacaciones'}>
                     <Checkbox checked={fila.es_vacaciones} onChange={(e) => marcarVacaciones(idx, e.target.checked)} size="small" sx={{ p: 0.5, color: '#F59E0B', '&.Mui-checked': { color: '#F59E0B' } }} />
                   </Tooltip>

@@ -201,6 +201,7 @@ export interface EstadoVehiculoCatalogo {
 export interface TipoVehiculoCatalogo {
   id: number;
   nombre: string;
+  activo?: boolean;
 }
 
 export interface TipoDocumentoCatalogo {
@@ -250,8 +251,13 @@ export interface ProgramacionItem {
   dependencia: string;
   destino: string;
   hora_salida_punto: string;
+  hora_finalizacion: string;
   actividad: string;
   es_vacaciones: boolean;
+  // Controla si la fila aparece en el PDF/planilla final generada al
+  // guardar cambios — filas sin marcar se conservan como borrador en el
+  // sistema pero no salen en el documento oficial impreso/exportado.
+  programado: boolean;
   orden?: number;
 }
 
