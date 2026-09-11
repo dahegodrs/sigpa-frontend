@@ -97,6 +97,11 @@ export const authService = {
   loginConGoogle: (idToken: string) => api.post<{ token: string; usuario: Usuario }>('/auth/google', { id_token: idToken }),
   loginConCredenciales: (email: string, password: string) =>
     api.post<{ token: string; usuario: Usuario }>('/auth/local', { email, password }),
+  // Solo Administrador: asigna o cambia la contraseña local de un usuario,
+  // permitiendo iniciar sesión con usuario+contraseña sin depender de una
+  // cuenta real de Google (útil para roles de prueba como "Solicitante").
+  asignarPasswordLocal: (userId: number, password: string) =>
+    api.post<{ actualizado: boolean }>('/auth/local/set-password', { user_id: userId, password }),
 };
 
 export const temaService = {
