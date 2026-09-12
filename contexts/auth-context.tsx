@@ -18,6 +18,14 @@ const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
 const USUARIO_KEY = 'sigpa_usuario';
 
+// La pantalla de inicio depende del rol: el rol "Solicitante" tiene acceso
+// reducido (solo puede pedir vehículos) y no debe caer en /dashboard, que
+// está reservado para roles con visibilidad de todo el parque automotor.
+function rutaInicialSegunRol(rolNombre: string): string {
+  if (rolNombre === 'Solicitante') return '/solicitar-vehiculo';
+  return '/dashboard';
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [usuario, setUsuario] = useState<Usuario | null>(null);
   const [cargando, setCargando] = useState(true);
@@ -42,7 +50,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       guardarToken(resultado.token);
       window.localStorage.setItem(USUARIO_KEY, JSON.stringify(resultado.usuario));
       setUsuario(resultado.usuario);
-      router.push('/dashboard');
+      router.push(rutaInicialSegunRol(resultado.usuario.rol_nombre));
     },
     [router]
   );
@@ -53,7 +61,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       guardarToken(resultado.token);
       window.localStorage.setItem(USUARIO_KEY, JSON.stringify(resultado.usuario));
       setUsuario(resultado.usuario);
-      router.push('/dashboard');
+      router.push(rutaInicialSegunRol(resultado.usuario.rol_nombre));
     },
     [router]
   );

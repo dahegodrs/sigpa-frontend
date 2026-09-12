@@ -8,7 +8,6 @@ import {
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import PictureAsPdfOutlinedIcon from '@mui/icons-material/PictureAsPdfOutlined';
 import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
-import Image from 'next/image';
 import AppShell from '@/components/layout/app-shell';
 import { programacionesService } from '@/lib/services';
 import { ApiError } from '@/lib/api-client';
@@ -45,10 +44,14 @@ export default function ProgramacionDetallePage() {
 
   // El backend devuelve TODAS las filas de la programación (incluidas las
   // que aún no fueron marcadas como "programado"), porque no se deben
-  // perder al guardar. Esta vista de detalle — que alimenta tanto la tabla
-  // en pantalla como el PDF oficial — solo debe mostrar las confirmadas.
+  // perder al guardar. La vista de PANTALLA muestra todas las filas
+  // (atenuando visualmente las pendientes) para que el director vea de
+  // inmediato cuando llega una nueva solicitud — solo el PDF/impresión
+  // oficial se limita a las confirmadas, ya que ese es el documento que
+  // efectivamente sale de la alcaldía.
   const itemsProgramados = (prog?.items || []).filter((it) => it.programado);
   const progParaImprimir = prog ? { ...prog, items: itemsProgramados } : null;
+  const hayPendientes = (prog?.items || []).some((it) => !it.programado);
 
   const puedeEditar = usuario && ['Administrador', 'Dependencia'].includes(usuario.rol_nombre);
 
@@ -119,13 +122,19 @@ export default function ProgramacionDetallePage() {
                   <Chip label="15-FR-36" size="small" variant="outlined" sx={{ fontSize: '0.68rem', mt: 0.5 }} />
                 </Box>
               </Stack>
+              {hayPendientes && (
+                <Alert severity="info" sx={{ mt: 2, fontSize: '0.8rem' }}>
+                  Hay filas sin marcar como "Programado" (solicitudes pendientes de asignar conductor/vehículo).
+                  Entra a Editar para completarlas — no aparecerán en el PDF hasta que las confirmes.
+                </Alert>
+              )}
             </Paper>
             <Paper sx={{ overflow: 'auto' }}>
               <Box sx={{ overflowX: 'auto' }}>
-                <Box component="table" sx={{ width: '100%', borderCollapse: 'collapse', minWidth: 900 }}>
+                <Box component="table" sx={{ width: '100%', borderCollapse: 'collapse', minWidth: 950 }}>
                   <Box component="thead">
                     <Box component="tr" sx={{ bgcolor: '#1A1A2E' }}>
-                      {['VEHÍCULO', 'CONDUCTOR', 'DEPENDENCIA', 'DESTINO', 'HORA DE SERVICIO Y PUNTO', 'HORA DE FINALIZACIÓN', 'ACTIVIDAD'].map((h) => (
+                      {['ESTADO', 'VEHÍCULO', 'CONDUCTOR', 'DEPENDENCIA', 'DESTINO', 'HORA DE SERVICIO Y PUNTO', 'HORA DE FINALIZACIÓN', 'ACTIVIDAD'].map((h) => (
                         <Box component="th" key={h} sx={{ p: 1.25, color: '#fff', fontWeight: 700, fontSize: '0.72rem', textAlign: 'center', letterSpacing: '0.06em', border: '1px solid #333' }}>
                           {h}
                         </Box>
@@ -133,14 +142,23 @@ export default function ProgramacionDetallePage() {
                     </Box>
                   </Box>
                   <Box component="tbody">
-                    {itemsProgramados.length === 0 ? (
+                    {(prog.items || []).length === 0 ? (
                       <Box component="tr">
-                        <Box component="td" sx={{ p: 3, textAlign: 'center', color: 'text.secondary', border: '1px solid #E0E0E0' }} colSpan={7}>
-                          Ningún registro está marcado como "Programado" todavía. Marca el check en las filas que quieras incluir en la planilla oficial.
+                        <Box component="td" sx={{ p: 3, textAlign: 'center', color: 'text.secondary', border: '1px solid #E0E0E0' }} colSpan={8}>
+                          Esta programación todavía no tiene filas registradas.
                         </Box>
                       </Box>
-                    ) : itemsProgramados.map((item, i) => (
-                      <Box component="tr" key={i} sx={{ bgcolor: item.es_vacaciones ? '#FFF8E1' : i % 2 === 0 ? '#fff' : '#F9F9FA' }}>
+                    ) : (prog.items || []).map((item, i) => (
+                      <Box component="tr" key={i} sx={{ bgcolor: item.es_vacaciones ? '#FFF8E1' : i % 2 === 0 ? '#fff' : '#F9F9FA', opacity: item.programado ? 1 : 0.65 }}>
+                        <Box component="td" sx={{ p: 1, fontSize: '0.7rem', border: '1px solid #E0E0E0', textAlign: 'center' }}>
+                          {item.programado ? (
+                            <Box component="span" sx={{ color: '#16A34A', fontWeight: 700 }}>✓ Programado</Box>
+                          ) : item.origen === 'solicitud' ? (
+                            <Box component="span" sx={{ color: '#2563EB', fontWeight: 700 }}>Solicitud pendiente</Box>
+                          ) : (
+                            <Box component="span" sx={{ color: 'text.disabled', fontWeight: 600 }}>Sin marcar</Box>
+                          )}
+                        </Box>
                         {[item.vehiculo_placa || '—', item.conductor, item.dependencia, item.destino, item.hora_salida_punto, item.hora_finalizacion, item.actividad].map((val, ci) => (
                           <Box component="td" key={ci} sx={{ p: 1, fontSize: '0.8rem', border: '1px solid #E0E0E0', textAlign: ci === 0 ? 'center' : 'left', fontWeight: item.es_vacaciones ? 700 : 400 }}>
                             {val}
