@@ -156,4 +156,17 @@ export const solicitudesVehiculoService = {
   crear: (data: SolicitudVehiculoPayload) =>
     api.post<{ programacion_id: number; item_id: number }>('/solicitudes-vehiculo', data),
   misSolicitudes: () => api.get<ProgramacionItem[]>('/solicitudes-vehiculo/mias'),
+  aprobar: (itemId: number) => api.put(`/programaciones/items/${itemId}/aprobar`, {}),
+  rechazar: (itemId: number, motivo: string) => api.put(`/programaciones/items/${itemId}/rechazar`, { motivo }),
+};
+
+export interface PlantillaSolicitud {
+  asunto: string;
+  cuerpo_html: string;
+}
+
+export const plantillaCorreoService = {
+  obtenerSolicitudVehiculo: () => api.get<PlantillaSolicitud>('/plantillas-correo/solicitud-vehiculo'),
+  guardarSolicitudVehiculo: (data: PlantillaSolicitud) =>
+    api.put('/plantillas-correo/solicitud-vehiculo', data),
 };

@@ -4,7 +4,8 @@ import { useCallback, useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import {
   Box, Paper, Typography, CircularProgress, Alert, Stack, Button,
-  TextField, MenuItem, Checkbox, Tooltip, IconButton,
+  TextField, MenuItem, Checkbox, Tooltip, IconButton, Dialog, DialogTitle,
+  DialogContent, DialogActions,
 } from '@mui/material';
 import { alpha, useTheme } from '@mui/material/styles';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
@@ -14,8 +15,10 @@ import SaveOutlinedIcon from '@mui/icons-material/SaveOutlined';
 import DragIndicatorIcon from '@mui/icons-material/DragIndicator';
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import AssignmentIndOutlinedIcon from '@mui/icons-material/AssignmentIndOutlined';
+import ThumbUpOutlinedIcon from '@mui/icons-material/ThumbUpOutlined';
+import ThumbDownOutlinedIcon from '@mui/icons-material/ThumbDownOutlined';
 import AppShell from '@/components/layout/app-shell';
-import { programacionesService, listasService, vehiculosService, dependenciasService } from '@/lib/services';
+import { programacionesService, listasService, vehiculosService, dependenciasService, solicitudesVehiculoService } from '@/lib/services';
 import { ApiError } from '@/lib/api-client';
 import type { ProgramacionItem, ListaConfiguracion, Vehiculo, Dependencia } from '@/types';
 
@@ -50,6 +53,11 @@ export default function EditarProgramacionPage() {
   const [actividades, setActividades] = useState<ListaConfiguracion[]>([]);
   const [vehiculos, setVehiculos] = useState<Vehiculo[]>([]);
   const [dependencias, setDependencias] = useState<Dependencia[]>([]);
+
+  // Diálogo para rechazar una solicitud con motivo obligatorio.
+  const [rechazoIdx, setRechazoIdx] = useState<number | null>(null);
+  const [motivoRechazo, setMotivoRechazo] = useState('');
+  const [procesandoDecision, setProcesandoDecision] = useState(false);
 
   const cargar = useCallback(() => {
     setCargando(true);
@@ -109,6 +117,41 @@ export default function EditarProgramacionPage() {
 
   const agregarFila = () => setFilas((prev) => [...prev, FILA_VACIA()]);
   const eliminarFila = (idx: number) => setFilas((prev) => prev.filter((_, i) => i !== idx));
+
+  // Aprobar/rechazar afectan solo esa fila puntual en el backend — el
+  // correo consolidado al solicitante se envía cuando el director presiona
+  // "Guardar cambios" (agrupando todas las decisiones tomadas en esta
+  // sesión), no en este clic individual.
+  const aprobarSolicitud = async (idx: number) => {
+    const fila = filas[idx];
+    if (!fila.id) return;
+    setProcesandoDecision(true);
+    try {
+      await solicitudesVehiculoService.aprobar(fila.id);
+      setFilas((prev) => prev.map((f, i) => i === idx ? { ...f, estado_solicitud: 'aprobada', programado: true } : f));
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : 'No se pudo aprobar la solicitud');
+    } finally {
+      setProcesandoDecision(false);
+    }
+  };
+
+  const confirmarRechazo = async () => {
+    if (rechazoIdx === null || !motivoRechazo.trim()) return;
+    const fila = filas[rechazoIdx];
+    if (!fila.id) return;
+    setProcesandoDecision(true);
+    try {
+      await solicitudesVehiculoService.rechazar(fila.id, motivoRechazo.trim());
+      setFilas((prev) => prev.map((f, i) => i === rechazoIdx ? { ...f, estado_solicitud: 'rechazada', motivo_rechazo: motivoRechazo.trim(), programado: false } : f));
+      setRechazoIdx(null);
+      setMotivoRechazo('');
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : 'No se pudo rechazar la solicitud');
+    } finally {
+      setProcesandoDecision(false);
+    }
+  };
 
   const guardar = async () => {
     if (!fecha) { setError('La fecha es obligatoria'); return; }
@@ -195,16 +238,39 @@ export default function EditarProgramacionPage() {
                   {actividades.map((a) => <MenuItem key={a.id} value={a.nombre}>{a.nombre}</MenuItem>)}
                 </TextField>
                 <Stack direction="row" alignItems="center" spacing={0.25}>
-                  <Tooltip title={fila.programado ? 'Fila incluida en la planilla final' : 'Fila NO se incluirá en la planilla final'}>
-                    <Checkbox
-                      checked={fila.programado}
-                      onChange={(e) => alternarProgramado(idx, e.target.checked)}
-                      size="small"
-                      icon={<CheckCircleOutlineIcon fontSize="small" />}
-                      checkedIcon={<CheckCircleOutlineIcon fontSize="small" />}
-                      sx={{ p: 0.5, color: 'text.disabled', '&.Mui-checked': { color: '#16A34A' } }}
-                    />
-                  </Tooltip>
+                  {fila.origen === 'solicitud' && fila.estado_solicitud === 'pendiente' ? (
+                    <>
+                      <Tooltip title="Aprobar esta solicitud (asigna el vehículo/conductor configurados arriba)">
+                        <IconButton size="small" onClick={() => aprobarSolicitud(idx)} disabled={procesandoDecision} sx={{ color: '#16A34A' }}>
+                          <ThumbUpOutlinedIcon fontSize="small" />
+                        </IconButton>
+                      </Tooltip>
+                      <Tooltip title="Rechazar esta solicitud">
+                        <IconButton size="small" onClick={() => { setRechazoIdx(idx); setMotivoRechazo(''); }} disabled={procesandoDecision} sx={{ color: '#DA151C' }}>
+                          <ThumbDownOutlinedIcon fontSize="small" />
+                        </IconButton>
+                      </Tooltip>
+                    </>
+                  ) : fila.origen === 'solicitud' && fila.estado_solicitud === 'aprobada' ? (
+                    <Tooltip title="Solicitud aprobada">
+                      <ThumbUpOutlinedIcon fontSize="small" sx={{ color: '#16A34A' }} />
+                    </Tooltip>
+                  ) : fila.origen === 'solicitud' && fila.estado_solicitud === 'rechazada' ? (
+                    <Tooltip title={`Rechazada: ${fila.motivo_rechazo || ''}`}>
+                      <ThumbDownOutlinedIcon fontSize="small" sx={{ color: '#DA151C' }} />
+                    </Tooltip>
+                  ) : (
+                    <Tooltip title={fila.programado ? 'Fila incluida en la planilla final' : 'Fila NO se incluirá en la planilla final'}>
+                      <Checkbox
+                        checked={fila.programado}
+                        onChange={(e) => alternarProgramado(idx, e.target.checked)}
+                        size="small"
+                        icon={<CheckCircleOutlineIcon fontSize="small" />}
+                        checkedIcon={<CheckCircleOutlineIcon fontSize="small" />}
+                        sx={{ p: 0.5, color: 'text.disabled', '&.Mui-checked': { color: '#16A34A' } }}
+                      />
+                    </Tooltip>
+                  )}
                   <Tooltip title={fila.es_vacaciones ? 'Quitar vacaciones' : 'Marcar vacaciones'}>
                     <Checkbox checked={fila.es_vacaciones} onChange={(e) => marcarVacaciones(idx, e.target.checked)} size="small" sx={{ p: 0.5, color: '#F59E0B', '&.Mui-checked': { color: '#F59E0B' } }} />
                   </Tooltip>
@@ -227,6 +293,31 @@ export default function EditarProgramacionPage() {
           {guardando ? 'Guardando…' : 'Guardar cambios'}
         </Button>
       </Stack>
+
+      <Dialog open={rechazoIdx !== null} onClose={() => setRechazoIdx(null)} maxWidth="xs" fullWidth>
+        <DialogTitle>Rechazar solicitud</DialogTitle>
+        <DialogContent>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+            Este motivo se le mostrará al solicitante en el correo de notificación.
+          </Typography>
+          <TextField
+            label="Motivo del rechazo"
+            fullWidth
+            multiline
+            minRows={3}
+            value={motivoRechazo}
+            onChange={(e) => setMotivoRechazo(e.target.value)}
+            placeholder="Ej. No hay vehículos disponibles para esa fecha"
+            autoFocus
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setRechazoIdx(null)} disabled={procesandoDecision}>Cancelar</Button>
+          <Button variant="contained" color="error" onClick={confirmarRechazo} disabled={procesandoDecision || !motivoRechazo.trim()}>
+            {procesandoDecision ? 'Rechazando…' : 'Confirmar rechazo'}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </AppShell>
   );
 }

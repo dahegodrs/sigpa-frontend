@@ -267,6 +267,13 @@ export interface ProgramacionItem {
   hora_solicitada?: string | null; // "HH:MM"
   punto_encuentro?: string | null;
   fecha_programacion?: string; // solo viene en "Mis solicitudes"
+  // ── Estado explícito de la solicitud (timeline tipo pasarela) ──────────
+  // Opcional en el frontend porque las filas manuales creadas por el
+  // director (sin pasar por el formulario de solicitud) no necesitan
+  // establecerlo — el backend le asigna 'pendiente' por defecto.
+  estado_solicitud?: 'pendiente' | 'aprobada' | 'rechazada';
+  motivo_rechazo?: string | null;
+  notificado_en?: string | null;
 }
 
 export interface Programacion {

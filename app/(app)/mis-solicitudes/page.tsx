@@ -4,10 +4,13 @@ import { useCallback, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   Box, Paper, Typography, CircularProgress, Alert, Stack, Button,
-  Table, TableHead, TableBody, TableRow, TableCell, Chip, Tooltip,
+  Table, TableHead, TableBody, TableRow, TableCell, Tooltip,
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import EventNoteOutlinedIcon from '@mui/icons-material/EventNoteOutlined';
+import CheckIcon from '@mui/icons-material/Check';
+import CloseIcon from '@mui/icons-material/Close';
+import HourglassEmptyIcon from '@mui/icons-material/HourglassEmpty';
 import AppShell from '@/components/layout/app-shell';
 import { solicitudesVehiculoService } from '@/lib/services';
 import { ApiError } from '@/lib/api-client';
@@ -17,6 +20,59 @@ function formatFecha(fecha?: string) {
   if (!fecha) return '—';
   const d = new Date(fecha + 'T00:00:00');
   return d.toLocaleDateString('es-CO', { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' });
+}
+
+// Timeline tipo "pasarela de pago": Solicitado (siempre completo) → En
+// espera de aprobación → Aprobada/Rechazada. Se implementa como 3 círculos
+// conectados por una línea, en vez del componente Stepper de MUI (pensado
+// para formularios paso a paso), porque aquí necesitamos un estado FINAL
+// que puede ser positivo o negativo (aprobada vs rechazada), no un simple
+// avance lineal.
+function TimelineSolicitud({ item }: { item: ProgramacionItem }) {
+  const estado = item.estado_solicitud || 'pendiente';
+
+  const pasos = [
+    { label: 'Solicitado', activo: true, color: '#2563EB' },
+    {
+      label: estado === 'pendiente' ? 'En espera de aprobación' : estado === 'aprobada' ? 'Aprobada' : 'Rechazada',
+      activo: estado !== 'pendiente' || true, // el paso 2 siempre está "vivo" (pendiente = en curso)
+      color: estado === 'aprobada' ? '#16A34A' : estado === 'rechazada' ? '#DA151C' : '#F59E0B',
+    },
+  ];
+
+  return (
+    <Stack direction="row" alignItems="center" spacing={0}>
+      {pasos.map((paso, i) => (
+        <Stack key={i} direction="row" alignItems="center">
+          <Tooltip title={paso.label}>
+            <Box
+              sx={{
+                width: 28, height: 28, borderRadius: '50%', bgcolor: paso.color,
+                display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+                boxShadow: `0 0 0 3px ${paso.color}22`,
+              }}
+            >
+              {i === 0 ? (
+                <CheckIcon sx={{ fontSize: 16, color: '#fff' }} />
+              ) : estado === 'aprobada' ? (
+                <CheckIcon sx={{ fontSize: 16, color: '#fff' }} />
+              ) : estado === 'rechazada' ? (
+                <CloseIcon sx={{ fontSize: 16, color: '#fff' }} />
+              ) : (
+                <HourglassEmptyIcon sx={{ fontSize: 14, color: '#fff' }} />
+              )}
+            </Box>
+          </Tooltip>
+          {i < pasos.length - 1 && (
+            <Box sx={{ width: 32, height: 2, bgcolor: pasos[i + 1].color, opacity: 0.4 }} />
+          )}
+        </Stack>
+      ))}
+      <Typography variant="caption" sx={{ ml: 1.5, fontWeight: 600, color: pasos[1].color, whiteSpace: 'nowrap' }}>
+        {pasos[1].label}
+      </Typography>
+    </Stack>
+  );
 }
 
 export default function MisSolicitudesPage() {
@@ -68,7 +124,7 @@ export default function MisSolicitudesPage() {
           </Box>
         ) : (
           <Box sx={{ overflowX: 'auto' }}>
-            <Table sx={{ minWidth: 760 }}>
+            <Table sx={{ minWidth: 820 }}>
               <TableHead>
                 <TableRow>
                   <TableCell>Fecha</TableCell>
@@ -96,12 +152,11 @@ export default function MisSolicitudesPage() {
                       <TableCell><Typography variant="body2">{item.destino}</Typography></TableCell>
                       <TableCell><Typography variant="body2">{item.actividad}</Typography></TableCell>
                       <TableCell>
-                        {item.programado ? (
-                          <Chip label="Confirmada" size="small" color="success" variant="outlined" />
-                        ) : asignado ? (
-                          <Chip label="Vehículo asignado" size="small" color="info" variant="outlined" />
-                        ) : (
-                          <Chip label="Pendiente de asignar" size="small" color="warning" variant="outlined" />
+                        <TimelineSolicitud item={item} />
+                        {item.estado_solicitud === 'rechazada' && item.motivo_rechazo && (
+                          <Typography variant="caption" color="error" sx={{ display: 'block', mt: 0.5 }}>
+                            Motivo: {item.motivo_rechazo}
+                          </Typography>
                         )}
                       </TableCell>
                       <TableCell>

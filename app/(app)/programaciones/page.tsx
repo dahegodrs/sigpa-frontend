@@ -10,8 +10,10 @@ import AddIcon from '@mui/icons-material/Add';
 import VisibilityIcon from '@mui/icons-material/VisibilityOutlined';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import CalendarMonthOutlinedIcon from '@mui/icons-material/CalendarMonthOutlined';
+import MailOutlineIcon from '@mui/icons-material/MailOutline';
 import AppShell from '@/components/layout/app-shell';
 import ConfirmDialog from '@/components/ui/confirm-dialog';
+import PlantillaCorreoDialog from '@/components/programaciones/plantilla-correo-dialog';
 import { programacionesService } from '@/lib/services';
 import { ApiError } from '@/lib/api-client';
 import { useAuth } from '@/contexts/auth-context';
@@ -30,6 +32,7 @@ export default function ProgramacionesPage() {
   const [error, setError] = useState<string | null>(null);
   const [programacionEliminar, setProgramacionEliminar] = useState<Programacion | null>(null);
   const [eliminando, setEliminando] = useState(false);
+  const [plantillaAbierta, setPlantillaAbierta] = useState(false);
 
   const puedeCrear = usuario && ['Administrador', 'Dependencia'].includes(usuario.rol_nombre);
   const puedeEliminar = usuario?.rol_nombre === 'Administrador';
@@ -68,11 +71,18 @@ export default function ProgramacionesPage() {
             Formato 15-FR-36 — {lista.length} programación{lista.length !== 1 ? 'es' : ''} registrada{lista.length !== 1 ? 's' : ''}
           </Typography>
         </Box>
-        {puedeCrear && (
-          <Button variant="contained" startIcon={<AddIcon />} onClick={() => router.push('/programaciones/nueva')}>
-            Nueva programación
-          </Button>
-        )}
+        <Stack direction="row" spacing={1.5}>
+          {usuario?.rol_nombre === 'Administrador' && (
+            <Button variant="outlined" startIcon={<MailOutlineIcon />} onClick={() => setPlantillaAbierta(true)}>
+              Plantilla de notificación
+            </Button>
+          )}
+          {puedeCrear && (
+            <Button variant="contained" startIcon={<AddIcon />} onClick={() => router.push('/programaciones/nueva')}>
+              Nueva programación
+            </Button>
+          )}
+        </Stack>
       </Stack>
 
       {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
@@ -169,6 +179,8 @@ export default function ProgramacionesPage() {
         onConfirmar={confirmarEliminar}
         onCancelar={() => setProgramacionEliminar(null)}
       />
+
+      <PlantillaCorreoDialog abierto={plantillaAbierta} onCerrar={() => setPlantillaAbierta(false)} />
     </AppShell>
   );
 }
