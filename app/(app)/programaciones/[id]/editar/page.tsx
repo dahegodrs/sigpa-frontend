@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import {
   Box, Paper, Typography, CircularProgress, Alert, Stack, Button,
-  TextField, MenuItem, Checkbox, Tooltip, IconButton, Chip,
+  TextField, MenuItem, Checkbox, Tooltip, IconButton,
 } from '@mui/material';
 import { alpha, useTheme } from '@mui/material/styles';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
@@ -13,6 +13,7 @@ import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import SaveOutlinedIcon from '@mui/icons-material/SaveOutlined';
 import DragIndicatorIcon from '@mui/icons-material/DragIndicator';
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
+import AssignmentIndOutlinedIcon from '@mui/icons-material/AssignmentIndOutlined';
 import AppShell from '@/components/layout/app-shell';
 import { programacionesService, listasService, vehiculosService, dependenciasService } from '@/lib/services';
 import { ApiError } from '@/lib/api-client';
@@ -152,18 +153,25 @@ export default function EditarProgramacionPage() {
         </Box>
         <Box sx={{ overflowX: 'auto' }}>
           <Box sx={{ minWidth: 1150 }}>
-            <Box sx={{ display: 'grid', gridTemplateColumns: '32px 130px 1fr 1fr 1fr 1fr 1fr 1fr 70px', gap: 0.5, px: 1.5, py: 1, bgcolor: '#FAFAFA', borderBottom: '2px solid', borderColor: 'divider' }}>
+            <Box sx={{ display: 'grid', gridTemplateColumns: '52px 130px 1fr 1fr 1fr 1fr 1fr 1fr 70px', gap: 0.5, px: 1.5, py: 1, bgcolor: '#FAFAFA', borderBottom: '2px solid', borderColor: 'divider' }}>
               {['', 'VEHÍCULO', 'CONDUCTOR', 'DEPENDENCIA', 'DESTINO', 'HORA DE SERVICIO Y PUNTO', 'HORA DE FINALIZACIÓN', 'ACTIVIDAD', ''].map((h, i) => (
                 <Typography key={i} variant="caption" fontWeight={700} sx={{ textTransform: 'uppercase', letterSpacing: '0.06em', color: 'text.secondary', fontSize: '0.65rem', display: 'flex', alignItems: 'center' }}>{h}</Typography>
               ))}
             </Box>
             {filas.map((fila, idx) => (
-              <Box key={idx} sx={{ display: 'grid', gridTemplateColumns: '32px 130px 1fr 1fr 1fr 1fr 1fr 1fr 70px', gap: 0.5, px: 1.5, py: 0.75, borderBottom: '1px solid', borderColor: 'divider', bgcolor: fila.origen === 'solicitud' ? '#EAF2FF' : fila.es_vacaciones ? '#FFF8E1' : idx % 2 === 0 ? 'background.paper' : alpha(theme.palette.text.primary, 0.02), alignItems: 'center', opacity: fila.programado ? 1 : 0.55 }}>
+              <Box key={idx} sx={{ display: 'grid', gridTemplateColumns: '52px 130px 1fr 1fr 1fr 1fr 1fr 1fr 70px', gap: 0.5, px: 1.5, py: 0.75, borderBottom: '1px solid', borderColor: 'divider', bgcolor: fila.origen === 'solicitud' ? '#EAF2FF' : fila.es_vacaciones ? '#FFF8E1' : idx % 2 === 0 ? 'background.paper' : alpha(theme.palette.text.primary, 0.02), alignItems: 'center', opacity: fila.programado ? 1 : 0.55 }}>
                 <Stack direction="row" alignItems="center" spacing={0.25}>
                   <DragIndicatorIcon sx={{ color: 'text.disabled', fontSize: 16 }} />
                   {fila.origen === 'solicitud' && (
-                    <Tooltip title={`Solicitado por ${fila.solicitante_nombre || 'un usuario'}${fila.motivo ? ` — Motivo: ${fila.motivo}` : ''}`}>
-                      <Chip label="Solicitud" size="small" color="info" sx={{ height: 18, fontSize: '0.6rem', fontWeight: 700 }} />
+                    <Tooltip title={`Solicitud de vehículo — Solicitado por ${fila.solicitante_nombre || 'un usuario'}${fila.motivo ? ` — Motivo: ${fila.motivo}` : ''}`}>
+                      <Box
+                        sx={{
+                          width: 20, height: 20, borderRadius: '50%', bgcolor: '#2563EB',
+                          display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, cursor: 'default',
+                        }}
+                      >
+                        <AssignmentIndOutlinedIcon sx={{ fontSize: 13, color: '#fff' }} />
+                      </Box>
                     </Tooltip>
                   )}
                 </Stack>
