@@ -21,10 +21,15 @@ export default function SolicitarVehiculoPage() {
 
   const [fecha, setFecha] = useState('');
   const [horaSolicitada, setHoraSolicitada] = useState('');
+  const [horaFinalizacion, setHoraFinalizacion] = useState('');
   const [puntoEncuentro, setPuntoEncuentro] = useState('');
   const [destino, setDestino] = useState('');
   const [actividad, setActividad] = useState('');
   const [motivo, setMotivo] = useState('');
+
+  // La fecha mínima seleccionable es hoy — no tiene sentido operativo
+  // solicitar un vehículo para una fecha que ya pasó.
+  const fechaMinima = new Date().toISOString().slice(0, 10);
 
   const [actividades, setActividades] = useState<ListaConfiguracion[]>([]);
   const [enviando, setEnviando] = useState(false);
@@ -38,6 +43,7 @@ export default function SolicitarVehiculoPage() {
   const limpiarFormulario = () => {
     setFecha('');
     setHoraSolicitada('');
+    setHoraFinalizacion('');
     setPuntoEncuentro('');
     setDestino('');
     setActividad('');
@@ -45,8 +51,12 @@ export default function SolicitarVehiculoPage() {
   };
 
   const enviar = async () => {
-    if (!fecha || !horaSolicitada || !puntoEncuentro.trim() || !destino.trim() || !actividad || !motivo.trim()) {
+    if (!fecha || !horaSolicitada || !horaFinalizacion || !puntoEncuentro.trim() || !destino.trim() || !actividad || !motivo.trim()) {
       setError('Todos los campos son obligatorios.');
+      return;
+    }
+    if (fecha < fechaMinima) {
+      setError('La fecha del servicio no puede ser anterior a hoy.');
       return;
     }
     setEnviando(true);
@@ -55,6 +65,7 @@ export default function SolicitarVehiculoPage() {
       await solicitudesVehiculoService.crear({
         fecha,
         hora_solicitada: horaSolicitada,
+        hora_finalizacion: horaFinalizacion,
         punto_encuentro: puntoEncuentro.trim(),
         destino: destino.trim(),
         actividad,
@@ -129,15 +140,27 @@ export default function SolicitarVehiculoPage() {
                     value={fecha}
                     onChange={(e) => setFecha(e.target.value)}
                     InputLabelProps={{ shrink: true }}
+                    inputProps={{ min: fechaMinima }}
+                    helperText="No se permiten fechas anteriores a hoy"
                   />
                 </Grid>
-                <Grid item xs={12} sm={6}>
+                <Grid item xs={12} sm={3}>
                   <TextField
-                    label="Hora del servicio"
+                    label="Hora de inicio"
                     type="time"
                     fullWidth
                     value={horaSolicitada}
                     onChange={(e) => setHoraSolicitada(e.target.value)}
+                    InputLabelProps={{ shrink: true }}
+                  />
+                </Grid>
+                <Grid item xs={12} sm={3}>
+                  <TextField
+                    label="Hora de finalización"
+                    type="time"
+                    fullWidth
+                    value={horaFinalizacion}
+                    onChange={(e) => setHoraFinalizacion(e.target.value)}
                     InputLabelProps={{ shrink: true }}
                   />
                 </Grid>

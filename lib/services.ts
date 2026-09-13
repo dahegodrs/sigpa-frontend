@@ -88,6 +88,8 @@ export const usuariosService = {
   listar: () => api.get<Usuario[]>('/usuarios'),
   invitar: (data: { email: string; nombre: string; rol_id: number; dependencia_id?: number | null }) =>
     api.post<{ id: number }>('/usuarios', data),
+  actualizarDatos: (id: number, nombre: string, email: string) =>
+    api.put(`/usuarios/${id}/datos`, { nombre, email }),
   actualizarRol: (id: number, rolId: number, dependenciaId: number | null) =>
     api.put(`/usuarios/${id}/rol`, { rol_id: rolId, dependencia_id: dependenciaId }),
   actualizarActivo: (id: number, activo: boolean) => api.put(`/usuarios/${id}/activo`, { activo }),
@@ -142,6 +144,7 @@ export const programacionesService = {
 export interface SolicitudVehiculoPayload {
   fecha: string; // "YYYY-MM-DD"
   hora_solicitada: string; // "HH:MM"
+  hora_finalizacion: string; // "HH:MM"
   punto_encuentro: string;
   destino: string;
   actividad: string;

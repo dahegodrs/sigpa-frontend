@@ -16,6 +16,8 @@ interface Props {
 }
 
 export default function UsuarioRolDialog({ abierto, usuario, catalogos, dependencias, onCerrar, onGuardado }: Props) {
+  const [nombre, setNombre] = useState('');
+  const [email, setEmail] = useState('');
   const [rolId, setRolId] = useState<number | ''>('');
   const [dependenciaId, setDependenciaId] = useState<number | ''>('');
   const [guardando, setGuardando] = useState(false);
@@ -30,6 +32,8 @@ export default function UsuarioRolDialog({ abierto, usuario, catalogos, dependen
 
   useEffect(() => {
     if (usuario) {
+      setNombre(usuario.nombre);
+      setEmail(usuario.email);
       setRolId(usuario.rol_id);
       setDependenciaId(usuario.dependencia_id || '');
     }
@@ -57,10 +61,16 @@ export default function UsuarioRolDialog({ abierto, usuario, catalogos, dependen
   };
 
   const guardar = async () => {
-    if (!usuario || !rolId) return;
+    if (!usuario || !rolId || !nombre.trim() || !email.trim()) return;
     setGuardando(true);
     setError(null);
     try {
+      // Se actualizan datos (nombre/correo) y rol/dependencia en llamadas
+      // separadas porque son endpoints distintos en el backend — así se
+      // conservan las validaciones e historial específicos de cada uno.
+      if (nombre.trim() !== usuario.nombre || email.trim() !== usuario.email) {
+        await usuariosService.actualizarDatos(usuario.id, nombre.trim(), email.trim());
+      }
       await usuariosService.actualizarRol(usuario.id, Number(rolId), dependenciaId ? Number(dependenciaId) : null);
       onGuardado();
     } catch (err) {
@@ -80,6 +90,12 @@ export default function UsuarioRolDialog({ abierto, usuario, catalogos, dependen
               <Alert severity="error">{error}</Alert>
             </Grid>
           )}
+          <Grid item xs={12}>
+            <TextField label="Nombre completo" fullWidth size="small" value={nombre} onChange={(e) => setNombre(e.target.value)} required />
+          </Grid>
+          <Grid item xs={12}>
+            <TextField label="Correo institucional" type="email" fullWidth size="small" value={email} onChange={(e) => setEmail(e.target.value)} required />
+          </Grid>
           <Grid item xs={12}>
             <TextField select label="Rol" fullWidth size="small" value={rolId} onChange={(e) => setRolId(Number(e.target.value))}>
               {catalogos?.roles.map((r) => (
