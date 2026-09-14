@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import {
   Box, Paper, Typography, CircularProgress, Alert, Stack, Button,
@@ -35,7 +35,18 @@ const FILA_VACIA = (): ProgramacionItem => ({
   vehiculo_id: null,
 });
 
+// useSearchParams() requiere un Suspense boundary para el prerenderizado
+// estático de Next.js (App Router) — sin este wrapper, `npm run build`
+// falla con "useSearchParams() should be wrapped in a suspense boundary".
 export default function NuevaProgramacionPage() {
+  return (
+    <Suspense fallback={null}>
+      <NuevaProgramacionContenido />
+    </Suspense>
+  );
+}
+
+function NuevaProgramacionContenido() {
   const router = useRouter();
   const theme = useTheme();
 
