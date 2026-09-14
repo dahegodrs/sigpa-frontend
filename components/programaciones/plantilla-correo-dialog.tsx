@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import {
   Dialog, DialogTitle, DialogContent, DialogActions, Button, TextField,
-  Grid, Alert, Typography, Chip, Stack, Box, Divider, CircularProgress,
+  Typography, Chip, Stack, Box, Alert, Divider, CircularProgress, Tooltip,
 } from '@mui/material';
 import { plantillaCorreoService } from '@/lib/services';
 import { ApiError } from '@/lib/api-client';
@@ -16,14 +16,17 @@ interface Props {
 const VARIABLES_DISPONIBLES = [
   { clave: '{{nombre_solicitante}}', descripcion: 'Nombre de quien pidió el vehículo' },
   { clave: '{{fecha_servicio}}', descripcion: 'Fecha del servicio solicitado' },
-  { clave: '{{detalle_aprobadas}}', descripcion: 'Bloque HTML con las solicitudes aprobadas (vehículo, conductor, horario)' },
-  { clave: '{{detalle_rechazadas}}', descripcion: 'Bloque HTML con las solicitudes rechazadas y su motivo' },
+  { clave: '{{detalle_aprobadas}}', descripcion: 'Lista de solicitudes aprobadas (vehículo, conductor, horario)' },
+  { clave: '{{detalle_rechazadas}}', descripcion: 'Lista de solicitudes rechazadas y su motivo' },
 ];
 
 // Editor de la plantilla de correo que se envía al solicitante cuando el
-// director aprueba/rechaza su(s) solicitud(es) de vehículo. Se guarda en
-// base de datos (no localStorage) para que la vea/edite cualquier
-// Administrador, y usa la identidad visual de la Alcaldía de Funza.
+// director aprueba/rechaza su(s) solicitud(es) de vehículo. El cuerpo es
+// TEXTO PLANO (igual que la plantilla de renovación de documentos) — el
+// backend aplica automáticamente el diseño institucional (header rojo con
+// esquinas redondeadas) antes de enviar, así el Administrador nunca ve ni
+// tiene que entender HTML. Se guarda en base de datos (no localStorage)
+// para que la vea/edite cualquier Administrador.
 export default function PlantillaCorreoDialog({ abierto, onCerrar }: Props) {
   const [asunto, setAsunto] = useState('');
   const [cuerpo, setCuerpo] = useState('');
@@ -64,56 +67,71 @@ export default function PlantillaCorreoDialog({ abierto, onCerrar }: Props) {
   };
 
   return (
-    <Dialog open={abierto} onClose={onCerrar} maxWidth="md" fullWidth>
-      <DialogTitle>Plantilla de notificación a solicitantes</DialogTitle>
+    <Dialog open={abierto} onClose={onCerrar} maxWidth="sm" fullWidth PaperProps={{ sx: { borderRadius: 3 } }}>
+      <DialogTitle>Editar plantilla de correo</DialogTitle>
       <DialogContent>
         <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
           Este correo se envía automáticamente al solicitante cuando guardas cambios en una programación
-          y hay solicitudes suyas aprobadas o rechazadas. Se envía un solo correo consolidado por persona,
-          incluso si tenía varias solicitudes para el mismo día.
+          y hay solicitudes suyas aprobadas o rechazadas. Los cambios se guardan para todos los correos futuros.
         </Typography>
 
         {cargando ? (
           <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}><CircularProgress /></Box>
         ) : (
-          <Grid container spacing={2.5}>
-            {error && <Grid item xs={12}><Alert severity="error">{error}</Alert></Grid>}
-            {exito && <Grid item xs={12}><Alert severity="success">Plantilla guardada correctamente.</Alert></Grid>}
+          <Stack spacing={2}>
+            {error && <Alert severity="error">{error}</Alert>}
+            {exito && <Alert severity="success">Plantilla guardada correctamente.</Alert>}
 
-            <Grid item xs={12}>
-              <TextField label="Asunto del correo" fullWidth size="small" value={asunto} onChange={(e) => setAsunto(e.target.value)} />
-            </Grid>
-            <Grid item xs={12}>
-              <TextField
-                label="Cuerpo del correo (HTML)"
-                fullWidth
-                multiline
-                minRows={10}
-                value={cuerpo}
-                onChange={(e) => setCuerpo(e.target.value)}
-                sx={{ '& textarea': { fontFamily: 'monospace', fontSize: 13 } }}
-              />
-            </Grid>
+            <Alert severity="info" sx={{ fontSize: '0.8rem' }}>
+              Usa <strong>{'{{variable}}'}</strong> para insertar datos dinámicos. Haz clic en un chip para insertarlo.
+            </Alert>
 
-            <Grid item xs={12}>
-              <Divider sx={{ mb: 1.5 }} />
-              <Typography variant="caption" fontWeight={700} sx={{ textTransform: 'uppercase', letterSpacing: '0.06em', color: 'text.secondary', display: 'block', mb: 1 }}>
+            {/* Variables disponibles — mismo patrón que la plantilla de renovación de documentos */}
+            <Box>
+              <Typography variant="caption" fontWeight={700} color="text.secondary" sx={{ textTransform: 'uppercase', letterSpacing: '0.06em', fontSize: '0.65rem', display: 'block', mb: 0.75 }}>
                 Variables disponibles
               </Typography>
-              <Stack spacing={0.75}>
+              <Stack direction="row" flexWrap="wrap" gap={0.75}>
                 {VARIABLES_DISPONIBLES.map((v) => (
-                  <Stack key={v.clave} direction="row" spacing={1.5} alignItems="center">
-                    <Chip label={v.clave} size="small" sx={{ fontFamily: 'monospace', bgcolor: '#EAF2FF' }} />
-                    <Typography variant="caption" color="text.secondary">{v.descripcion}</Typography>
-                  </Stack>
+                  <Tooltip key={v.clave} title={v.descripcion} placement="top">
+                    <Chip
+                      label={v.clave}
+                      size="small"
+                      variant="outlined"
+                      onClick={() => setCuerpo((prev) => prev + ' ' + v.clave)}
+                      sx={{ fontFamily: 'monospace', fontSize: '0.72rem', cursor: 'pointer' }}
+                    />
+                  </Tooltip>
                 ))}
               </Stack>
-            </Grid>
-          </Grid>
+            </Box>
+
+            <Divider />
+
+            <TextField
+              label="Asunto (plantilla)"
+              fullWidth
+              size="small"
+              value={asunto}
+              onChange={(e) => setAsunto(e.target.value)}
+            />
+
+            <TextField
+              label="Cuerpo del correo (plantilla)"
+              fullWidth
+              multiline
+              minRows={8}
+              maxRows={14}
+              size="small"
+              value={cuerpo}
+              onChange={(e) => setCuerpo(e.target.value)}
+              sx={{ '& .MuiInputBase-input': { fontFamily: 'inherit', fontSize: '0.85rem', lineHeight: 1.7 } }}
+            />
+          </Stack>
         )}
       </DialogContent>
       <DialogActions sx={{ px: 3, pb: 2 }}>
-        <Button onClick={onCerrar} disabled={guardando}>Cerrar</Button>
+        <Button onClick={onCerrar} disabled={guardando}>Cancelar</Button>
         <Button variant="contained" onClick={guardar} disabled={guardando || cargando}>
           {guardando ? 'Guardando…' : 'Guardar plantilla'}
         </Button>
