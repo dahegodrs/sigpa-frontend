@@ -291,6 +291,9 @@ export interface Programacion {
   // planilla oficial (las sin marcar existen pero no cuentan aquí).
   total_items?: number;
   total_programados?: number;
+  // Indica si el día tiene al menos una fila de solicitud sin resolver -
+  // el frontend lo usa para resaltar en rojo el día en el calendario.
+  tiene_pendientes?: boolean;
   items?: ProgramacionItem[];
 }
 

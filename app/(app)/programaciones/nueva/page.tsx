@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import {
   Box, Paper, Typography, CircularProgress, Alert, Stack, Button,
   TextField, MenuItem, Checkbox, Tooltip, IconButton, Divider,
@@ -39,7 +39,10 @@ export default function NuevaProgramacionPage() {
   const router = useRouter();
   const theme = useTheme();
 
-  const [fecha, setFecha] = useState(() => new Date().toISOString().slice(0, 10));
+  // Si viene de "programaciones?fecha=...&mes=..." (clic en un día vacío
+  // del calendario), se pre-llena la fecha en vez de usar la de hoy.
+  const searchParams = useSearchParams();
+  const [fecha, setFecha] = useState(() => searchParams.get('fecha') || new Date().toISOString().slice(0, 10));
   const [observaciones, setObservaciones] = useState('');
   const [filas, setFilas] = useState<ProgramacionItem[]>([FILA_VACIA()]);
   const [guardando, setGuardando] = useState(false);

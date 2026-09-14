@@ -133,7 +133,10 @@ export const tiposVehiculoService = {
 };
 
 export const programacionesService = {
-  listar: () => api.get<Programacion[]>('/programaciones'),
+  // Si se pasan anio/mes, filtra solo las programaciones de ese mes -
+  // usado por la vista de calendario para no cargar todo el histórico.
+  listar: (anio?: number, mes?: number) =>
+    api.get<Programacion[]>(`/programaciones${buildQuery({ anio, mes })}`),
   obtener: (id: number) => api.get<Programacion>(`/programaciones/${id}`),
   obtenerUltima: () => api.get<Programacion>('/programaciones/ultima'),
   crear: (data: Partial<Programacion>) => api.post<{ id: number }>('/programaciones', data),
@@ -152,10 +155,21 @@ export interface SolicitudVehiculoPayload {
   dependencia?: string;
 }
 
+export interface FiltrosMisSolicitudes {
+  estado?: string;
+  anio?: number;
+  mes?: number;
+  page?: number;
+  page_size?: number;
+}
+
 export const solicitudesVehiculoService = {
   crear: (data: SolicitudVehiculoPayload) =>
     api.post<{ programacion_id: number; item_id: number }>('/solicitudes-vehiculo', data),
-  misSolicitudes: () => api.get<ProgramacionItem[]>('/solicitudes-vehiculo/mias'),
+  // Devuelve data + meta de paginación — usado por "Mis solicitudes" para
+  // no cargar decenas de registros de golpe.
+  misSolicitudes: (filtros: FiltrosMisSolicitudes = {}) =>
+    api.getWithMeta<ProgramacionItem[]>(`/solicitudes-vehiculo/mias${buildQuery(filtros as Record<string, unknown>)}`),
   aprobar: (itemId: number) => api.put(`/programaciones/items/${itemId}/aprobar`, {}),
   rechazar: (itemId: number, motivo: string) => api.put(`/programaciones/items/${itemId}/rechazar`, { motivo }),
   desbloquear: (itemId: number) => api.put(`/programaciones/items/${itemId}/desbloquear`, {}),
