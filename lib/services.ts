@@ -158,6 +158,7 @@ export const solicitudesVehiculoService = {
   misSolicitudes: () => api.get<ProgramacionItem[]>('/solicitudes-vehiculo/mias'),
   aprobar: (itemId: number) => api.put(`/programaciones/items/${itemId}/aprobar`, {}),
   rechazar: (itemId: number, motivo: string) => api.put(`/programaciones/items/${itemId}/rechazar`, { motivo }),
+  desbloquear: (itemId: number) => api.put(`/programaciones/items/${itemId}/desbloquear`, {}),
 };
 
 export interface PlantillaSolicitud {
