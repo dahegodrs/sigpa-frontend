@@ -467,11 +467,11 @@ function TabDependencias() {
 // listasService, pero comparte la misma UI de selector + tabla para que la
 // experiencia sea consistente para el Administrador.
 const TIPOS_LISTA = [
-  { value: 'conductor', label: '?? Conductores' },
-  { value: 'actividad', label: '? Actividades' },
-  { value: 'actividad_solicitud', label: '?? Actividades de solicitud' },
-  { value: 'patio_vehiculo', label: '??? Veh?culos de patio' },
-  { value: 'tipo_vehiculo', label: '?? Tipos de veh?culo' },
+  { value: 'conductor', label: 'Conductores' },
+  { value: 'actividad', label: 'Actividades' },
+  { value: 'actividad_solicitud', label: 'Actividades de solicitud' },
+  { value: 'patio_vehiculo', label: 'Vehiculos de patio' },
+  { value: 'tipo_vehiculo', label: 'Tipos de vehiculo' },
 ];
 
 function TabListas() {
