@@ -11,15 +11,19 @@ import SendOutlinedIcon from '@mui/icons-material/SendOutlined';
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import DirectionsCarFilledOutlinedIcon from '@mui/icons-material/DirectionsCarFilledOutlined';
 import AppShell from '@/components/layout/app-shell';
-import { listasService, solicitudesVehiculoService } from '@/lib/services';
+import { catalogosService, listasService, solicitudesVehiculoService } from '@/lib/services';
 import { ApiError } from '@/lib/api-client';
-import type { ListaConfiguracion } from '@/types';
+import type { ListaConfiguracion, TipoVehiculoCatalogo } from '@/types';
 
 export default function SolicitarVehiculoPage() {
   const theme = useTheme();
   const router = useRouter();
 
   const [fecha, setFecha] = useState('');
+  // Tipo de vehículo que el solicitante necesita (no un vehículo
+  // concreto — eso lo asigna el director después). Va justo después de la
+  // fecha porque es de las primeras decisiones que el solicitante toma.
+  const [tipoVehiculoId, setTipoVehiculoId] = useState<number | ''>('');
   const [horaSolicitada, setHoraSolicitada] = useState('');
   const [horaFinalizacion, setHoraFinalizacion] = useState('');
   const [puntoEncuentro, setPuntoEncuentro] = useState('');
@@ -31,17 +35,24 @@ export default function SolicitarVehiculoPage() {
   // solicitar un vehículo para una fecha que ya pasó.
   const fechaMinima = new Date().toISOString().slice(0, 10);
 
+  const [tiposVehiculo, setTiposVehiculo] = useState<TipoVehiculoCatalogo[]>([]);
+  // Las actividades del formulario de solicitud usan un catálogo propio
+  // ('actividad_solicitud', configurable desde Admin → Listas) con solo 3
+  // valores fijos — distinto del catálogo completo ('actividad') que usa
+  // el Administrador en Nueva/Editar Programación.
   const [actividades, setActividades] = useState<ListaConfiguracion[]>([]);
   const [enviando, setEnviando] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [enviado, setEnviado] = useState(false);
 
   useEffect(() => {
-    listasService.listar('actividad').then((res) => setActividades(res || [])).catch(() => {});
+    listasService.listar('actividad_solicitud').then((res) => setActividades(res || [])).catch(() => {});
+    catalogosService.obtenerTodos().then((res) => setTiposVehiculo(res.tipos_vehiculo || [])).catch(() => {});
   }, []);
 
   const limpiarFormulario = () => {
     setFecha('');
+    setTipoVehiculoId('');
     setHoraSolicitada('');
     setHoraFinalizacion('');
     setPuntoEncuentro('');
@@ -51,7 +62,7 @@ export default function SolicitarVehiculoPage() {
   };
 
   const enviar = async () => {
-    if (!fecha || !horaSolicitada || !horaFinalizacion || !puntoEncuentro.trim() || !destino.trim() || !actividad || !motivo.trim()) {
+    if (!fecha || !tipoVehiculoId || !horaSolicitada || !horaFinalizacion || !puntoEncuentro.trim() || !destino.trim() || !actividad || !motivo.trim()) {
       setError('Todos los campos son obligatorios.');
       return;
     }
@@ -64,6 +75,7 @@ export default function SolicitarVehiculoPage() {
     try {
       await solicitudesVehiculoService.crear({
         fecha,
+        tipo_vehiculo_id: Number(tipoVehiculoId),
         hora_solicitada: horaSolicitada,
         hora_finalizacion: horaFinalizacion,
         punto_encuentro: puntoEncuentro.trim(),
@@ -143,6 +155,20 @@ export default function SolicitarVehiculoPage() {
                     inputProps={{ min: fechaMinima }}
                     helperText="No se permiten fechas anteriores a hoy"
                   />
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <TextField
+                    select
+                    label="Tipo de vehículo"
+                    fullWidth
+                    value={tipoVehiculoId}
+                    onChange={(e) => setTipoVehiculoId(e.target.value ? Number(e.target.value) : '')}
+                    helperText="Categoría de vehículo que necesitas (el director asignará uno específico)"
+                  >
+                    {tiposVehiculo.map((t) => (
+                      <MenuItem key={t.id} value={t.id}>{t.nombre}</MenuItem>
+                    ))}
+                  </TextField>
                 </Grid>
                 <Grid item xs={12} sm={3}>
                   <TextField

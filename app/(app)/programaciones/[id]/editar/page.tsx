@@ -38,6 +38,20 @@ const FILA_VACIA = (): ProgramacionItem => ({
   vehiculo_id: null,
 });
 
+// Muestra el tipo de vehículo relevante para la fila: si ya hay un
+// vehículo real asignado (por placa), se usa el tipo de ESE vehículo
+// (viene del catálogo). Si es una solicitud sin vehículo asignado aún, se
+// muestra el tipo que el solicitante pidió como referencia para el
+// director al momento de elegir un vehículo real.
+function tipoVehiculoParaFila(fila: ProgramacionItem, vehiculos: Vehiculo[]): string {
+  if (fila.vehiculo_id) {
+    const v = vehiculos.find((veh) => veh.id === fila.vehiculo_id);
+    if (v?.tipo_vehiculo_nombre) return v.tipo_vehiculo_nombre;
+  }
+  if (fila.tipo_vehiculo_solicitado_nombre) return fila.tipo_vehiculo_solicitado_nombre;
+  return '—';
+}
+
 export default function EditarProgramacionPage() {
   const params = useParams();
   const router = useRouter();
@@ -218,16 +232,16 @@ export default function EditarProgramacionPage() {
           <Button size="small" startIcon={<AddIcon />} variant="outlined" onClick={agregarFila}>Agregar fila</Button>
         </Box>
         <Box sx={{ overflowX: 'auto' }}>
-          <Box sx={{ minWidth: 1230 }}>
-            <Box sx={{ display: 'grid', gridTemplateColumns: '52px 130px 1fr 1fr 1fr 1fr 1fr 1fr 150px', gap: 0.5, px: 1.5, py: 1, bgcolor: '#FAFAFA', borderBottom: '2px solid', borderColor: 'divider' }}>
-              {['', 'VEHÍCULO', 'CONDUCTOR', 'DEPENDENCIA', 'DESTINO', 'HORA DE SERVICIO Y PUNTO', 'HORA DE FINALIZACIÓN', 'ACTIVIDAD', 'ACCIONES'].map((h, i) => (
+          <Box sx={{ minWidth: 1330 }}>
+            <Box sx={{ display: 'grid', gridTemplateColumns: '52px 130px 110px 1fr 1fr 1fr 1fr 1fr 1fr 150px', gap: 0.5, px: 1.5, py: 1, bgcolor: '#FAFAFA', borderBottom: '2px solid', borderColor: 'divider' }}>
+              {['', 'VEHÍCULO', 'TIPO', 'CONDUCTOR', 'DEPENDENCIA', 'DESTINO', 'HORA DE SERVICIO Y PUNTO', 'HORA DE FINALIZACIÓN', 'ACTIVIDAD', 'ACCIONES'].map((h, i) => (
                 <Typography key={i} variant="caption" fontWeight={700} sx={{ textTransform: 'uppercase', letterSpacing: '0.06em', color: 'text.secondary', fontSize: '0.65rem', display: 'flex', alignItems: 'center' }}>{h}</Typography>
               ))}
             </Box>
             {filas.map((fila, idx) => {
               const bloqueada = !!fila.notificado_en;
               return (
-              <Box key={idx} sx={{ display: 'grid', gridTemplateColumns: '52px 130px 1fr 1fr 1fr 1fr 1fr 1fr 150px', gap: 0.5, px: 1.5, py: 0.9, borderBottom: '1px solid', borderColor: 'divider', bgcolor: bloqueada ? '#F5F5F5' : fila.origen === 'solicitud' ? '#EAF2FF' : fila.es_vacaciones ? '#FFF8E1' : idx % 2 === 0 ? 'background.paper' : alpha(theme.palette.text.primary, 0.02), alignItems: 'center', opacity: bloqueada ? 0.85 : fila.programado ? 1 : 0.55 }}>
+              <Box key={idx} sx={{ display: 'grid', gridTemplateColumns: '52px 130px 110px 1fr 1fr 1fr 1fr 1fr 1fr 150px', gap: 0.5, px: 1.5, py: 0.9, borderBottom: '1px solid', borderColor: 'divider', bgcolor: bloqueada ? '#F5F5F5' : fila.origen === 'solicitud' ? '#EAF2FF' : fila.es_vacaciones ? '#FFF8E1' : idx % 2 === 0 ? 'background.paper' : alpha(theme.palette.text.primary, 0.02), alignItems: 'center', opacity: bloqueada ? 0.85 : fila.programado ? 1 : 0.55 }}>
                 <Stack direction="row" alignItems="center" spacing={0.25}>
                   <DragIndicatorIcon sx={{ color: 'text.disabled', fontSize: 16 }} />
                   {fila.origen === 'solicitud' && (
@@ -247,6 +261,11 @@ export default function EditarProgramacionPage() {
                   <MenuItem value=""><em>Sin vehículo</em></MenuItem>
                   {vehiculos.map((v) => <MenuItem key={v.id} value={v.id}>{v.placa}</MenuItem>)}
                 </TextField>
+                <Tooltip title={fila.vehiculo_id ? 'Tipo del vehículo asignado' : 'Tipo solicitado por el usuario (referencia)'}>
+                  <Typography variant="caption" sx={{ fontSize: 11, color: fila.vehiculo_id ? 'text.primary' : 'text.secondary', fontStyle: fila.vehiculo_id ? 'normal' : 'italic', px: 0.5 }} noWrap>
+                    {tipoVehiculoParaFila(fila, vehiculos)}
+                  </Typography>
+                </Tooltip>
                 <TextField select size="small" value={fila.conductor} onChange={(e) => actualizarFila(idx, 'conductor', e.target.value)} disabled={bloqueada} sx={{ '& .MuiInputBase-root': { fontSize: 12 } }}>
                   {conductores.map((c) => <MenuItem key={c.id} value={c.nombre}>{c.nombre}</MenuItem>)}
                 </TextField>

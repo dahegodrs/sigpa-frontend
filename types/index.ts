@@ -267,6 +267,11 @@ export interface ProgramacionItem {
   hora_solicitada?: string | null; // "HH:MM"
   punto_encuentro?: string | null;
   fecha_programacion?: string; // solo viene en "Mis solicitudes"
+  // Tipo de vehículo que el solicitante pidió (ej. "Camioneta") - distinto
+  // del vehículo real que finalmente se asigna, ya que en el momento de
+  // solicitar todavía no existe un vehículo concreto.
+  tipo_vehiculo_solicitado_id?: number | null;
+  tipo_vehiculo_solicitado_nombre?: string;
   // ── Estado explícito de la solicitud (timeline tipo pasarela) ──────────
   // Opcional en el frontend porque las filas manuales creadas por el
   // director (sin pasar por el formulario de solicitud) no necesitan

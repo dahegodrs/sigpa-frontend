@@ -153,6 +153,9 @@ export interface SolicitudVehiculoPayload {
   actividad: string;
   motivo: string;
   dependencia?: string;
+  // Tipo de vehículo que el solicitante necesita (ej. "Camioneta") - el
+  // backend lo guarda como referencia, no como el vehículo asignado.
+  tipo_vehiculo_id?: number | null;
 }
 
 export interface FiltrosMisSolicitudes {

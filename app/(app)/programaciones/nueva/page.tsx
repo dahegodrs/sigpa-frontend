@@ -226,8 +226,8 @@ function NuevaProgramacionContenido() {
         <Box sx={{ overflowX: 'auto' }}>
           <Box sx={{ minWidth: 1150 }}>
             {/* Cabecera */}
-            <Box sx={{ display: 'grid', gridTemplateColumns: '32px 130px 1fr 1fr 1fr 1fr 1fr 1fr 70px', gap: 0.5, px: 1.5, py: 1, bgcolor: '#FAFAFA', borderBottom: '2px solid', borderColor: 'divider' }}>
-              {['', 'VEHÍCULO', 'CONDUCTOR', 'DEPENDENCIA', 'DESTINO', 'HORA DE SERVICIO Y PUNTO', 'HORA DE FINALIZACIÓN', 'ACTIVIDAD', ''].map((h, i) => (
+            <Box sx={{ display: 'grid', gridTemplateColumns: '32px 130px 100px 1fr 1fr 1fr 1fr 1fr 1fr 70px', gap: 0.5, px: 1.5, py: 1, bgcolor: '#FAFAFA', borderBottom: '2px solid', borderColor: 'divider' }}>
+              {['', 'VEHÍCULO', 'TIPO', 'CONDUCTOR', 'DEPENDENCIA', 'DESTINO', 'HORA DE SERVICIO Y PUNTO', 'HORA DE FINALIZACIÓN', 'ACTIVIDAD', ''].map((h, i) => (
                 <Typography key={i} variant="caption" fontWeight={700} sx={{ textTransform: 'uppercase', letterSpacing: '0.06em', color: 'text.secondary', fontSize: '0.65rem', display: 'flex', alignItems: 'center' }}>
                   {h}
                 </Typography>
@@ -240,7 +240,7 @@ function NuevaProgramacionContenido() {
                 key={idx}
                 sx={{
                   display: 'grid',
-                  gridTemplateColumns: '32px 130px 1fr 1fr 1fr 1fr 1fr 1fr 70px',
+                  gridTemplateColumns: '32px 130px 100px 1fr 1fr 1fr 1fr 1fr 1fr 70px',
                   gap: 0.5,
                   px: 1.5,
                   py: 0.75,
@@ -264,6 +264,10 @@ function NuevaProgramacionContenido() {
                   <MenuItem value=""><em>Sin vehículo</em></MenuItem>
                   {vehiculos.map((v) => <MenuItem key={v.id} value={v.id}>{v.placa}</MenuItem>)}
                 </TextField>
+
+                <Typography variant="caption" sx={{ fontSize: 11, color: 'text.secondary', px: 0.5 }} noWrap>
+                  {vehiculos.find((v) => v.id === fila.vehiculo_id)?.tipo_vehiculo_nombre || '—'}
+                </Typography>
 
                 <TextField
                   select size="small" value={fila.conductor}
