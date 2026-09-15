@@ -142,10 +142,15 @@ export default function EditarProgramacionPage() {
     const fila = filas[idx];
     if (!fila.id) return;
     setProcesandoDecision(true);
+    setError(null);
     try {
       await solicitudesVehiculoService.aprobar(fila.id);
       setFilas((prev) => prev.map((f, i) => i === idx ? { ...f, estado_solicitud: 'aprobada', programado: true } : f));
     } catch (err) {
+      // Un 409 significa conflicto de horario (mismo vehículo o conductor
+      // ya programado en un horario que se solapa) — el mensaje ya viene
+      // descriptivo desde el backend (ej. "Ya existe el vehículo BXL94C
+      // programado de 08:00 a 10:00..."), se muestra tal cual.
       setError(err instanceof ApiError ? err.message : 'No se pudo aprobar la solicitud');
     } finally {
       setProcesandoDecision(false);

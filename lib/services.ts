@@ -106,6 +106,13 @@ export const authService = {
     api.post<{ actualizado: boolean }>('/auth/local/set-password', { user_id: userId, password }),
 };
 
+// Timeout de cierre de sesión por inactividad, configurable desde el
+// backend vía variable de entorno SESSION_TIMEOUT_MINUTES — el frontend
+// no lo tiene hardcodeado.
+export const sessionService = {
+  obtenerTimeout: () => api.get<{ timeout_minutes: number }>('/public/session-timeout'),
+};
+
 export const temaService = {
   // Sin autenticación: se usa en la pantalla de login para tematizar antes de que el usuario inicie sesión.
   obtenerPorDominio: (dominio: string) => api.get<OrganizacionTema>(`/public/tema?dominio=${encodeURIComponent(dominio)}`),

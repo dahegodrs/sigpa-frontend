@@ -4,11 +4,12 @@ import { ReactNode, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Box, Toolbar, CircularProgress, useMediaQuery, useTheme } from '@mui/material';
 import { useAuth } from '@/contexts/auth-context';
+import { useInactivityLogout } from '@/lib/hooks/use-inactivity-logout';
 import Sidebar, { ANCHO_SIDEBAR } from './sidebar';
 import Topbar from './topbar';
 
 export default function AppShell({ titulo, children }: { titulo: string; children: ReactNode }) {
-  const { usuario, cargando } = useAuth();
+  const { usuario, cargando, logout } = useAuth();
   const router = useRouter();
   const theme = useTheme();
   const esMovil = useMediaQuery(theme.breakpoints.down('md'));
@@ -19,6 +20,11 @@ export default function AppShell({ titulo, children }: { titulo: string; childre
       router.replace('/login');
     }
   }, [cargando, usuario, router]);
+
+  // Cierra la sesión automáticamente tras N minutos sin actividad del
+  // usuario (configurable desde el backend) — se activa en todas las
+  // pantallas protegidas, ya que AppShell las envuelve a todas.
+  useInactivityLogout(logout, !!usuario);
 
   // Si la ventana pasa a tamaño de escritorio, el drawer "temporal" de móvil
   // no debe quedar abierto por detrás del permanente.
