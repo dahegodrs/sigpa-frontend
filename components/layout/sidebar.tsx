@@ -21,6 +21,7 @@ import { useTema } from '@/contexts/tema-context';
 import { useModo } from '@/contexts/modo-context';
 import { useConteosYOrganizacion } from '@/lib/hooks/use-conteos';
 import { COLORES_POR_DEFECTO } from '@/lib/theme';
+import { APP_VERSION, DESARROLLADO_POR } from '@/lib/version';
 
 const ANCHO_SIDEBAR = 240;
 
@@ -147,6 +148,9 @@ export default function Sidebar({ movil, abierto, onCerrar }: { movil: boolean; 
           <ListItemIcon sx={{ color: 'inherit', minWidth: 30 }}><LogoutIcon fontSize="small" /></ListItemIcon>
           <ListItemText primaryTypographyProps={{ fontSize: 13 }}>Cerrar sesión</ListItemText>
         </ListItemButton>
+        <Typography variant="caption" sx={{ display: 'block', textAlign: 'center', mt: 1.5, color: 'rgba(255,255,255,0.3)', fontSize: '0.65rem' }}>
+          v{APP_VERSION} · {DESARROLLADO_POR}
+        </Typography>
       </Box>
     </Box>
   );
