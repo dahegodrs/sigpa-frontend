@@ -19,6 +19,7 @@ import { useAuth } from '@/contexts/auth-context';
 import { useCatalogos } from '@/lib/hooks/use-catalogos';
 import { vehiculosService } from '@/lib/services';
 import { ApiError } from '@/lib/api-client';
+import { exportarExcel } from '@/lib/excel-export';
 import type { Vehiculo } from '@/types';
 
 const ROLES_PUEDEN_CREAR = ['Administrador'];
@@ -111,6 +112,26 @@ function VehiculosContent() {
   const puedeCrear = usuario && ROLES_PUEDEN_CREAR.includes(usuario.rol_nombre);
   const filtrosActivos = !!(placa || dependenciaId || tipoVehiculoId || estadoId);
 
+  const exportarVehiculosExcel = () => {
+    exportarExcel(
+      'vehiculos',
+      'Vehiculos',
+      ['Placa', 'Tipo', 'Marca', 'Línea', 'Modelo', 'Dependencia', 'Responsable', 'Estado', 'SOAT', 'Tecnomecánica'],
+      vehiculos.map((v) => [
+        v.placa,
+        v.tipo_vehiculo_nombre || '',
+        v.marca || '',
+        v.linea || '',
+        v.modelo || '',
+        v.dependencia_nombre || '',
+        v.responsable_nombre || '',
+        v.estado_nombre || '',
+        v.soat_estado || 'Sin cargar',
+        v.tecno_estado || 'Sin cargar',
+      ])
+    );
+  };
+
   return (
     <AppShell titulo="Vehículos">
       <Stack direction={{ xs: 'column', sm: 'row' }} justifyContent="space-between" alignItems={{ sm: 'center' }} spacing={2} sx={{ mb: 2 }}>
@@ -121,9 +142,9 @@ function VehiculosContent() {
           </Typography>
         </Box>
         <Stack direction="row" spacing={1}>
-          <Tooltip title="La exportación a Excel llega en la Fase 4 del proyecto">
-            <span><Button variant="outlined" startIcon={<DownloadIcon />} disabled size="small">Exportar Excel</Button></span>
-          </Tooltip>
+          <Button variant="outlined" startIcon={<DownloadIcon />} onClick={exportarVehiculosExcel} size="small">
+            Exportar Excel
+          </Button>
           {puedeCrear && (
             <Button variant="contained" startIcon={<AddIcon />} onClick={() => setDialogoAbierto(true)} size="small">
               Nuevo vehículo

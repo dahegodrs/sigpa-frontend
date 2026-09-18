@@ -16,6 +16,7 @@ import AppShell from '@/components/layout/app-shell';
 import ChartCard from '@/components/dashboard/chart-card';
 import { dashboardService, vehiculosService, documentosService, dependenciasService, alertasService } from '@/lib/services';
 import { exportarCSV } from '@/lib/csv-export';
+import { exportarExcel } from '@/lib/excel-export';
 import { ApiError } from '@/lib/api-client';
 import type { DashboardCompleto, Vehiculo, Documento, Dependencia, Alerta } from '@/types';
 
@@ -89,7 +90,7 @@ const WIDGETS_CONFIG = [
     descripcion: 'Ficha completa con datos técnicos y asignación',
     gradiente: 'linear-gradient(135deg, #3B82F6 0%, #1E40AF 100%)',
     icono: IcoInventario,
-    key: 'exportarInventario' as const,
+    key: 'inventario' as const,
   },
   {
     id: 'vencidos',
@@ -97,7 +98,7 @@ const WIDGETS_CONFIG = [
     descripcion: 'SOAT, Tecnomecánica y Pólizas con fecha expirada',
     gradiente: 'linear-gradient(135deg, #EF4444 0%, #B91C1C 100%)',
     icono: IcoVencidos,
-    key: 'exportarDocumentosVencidos' as const,
+    key: 'documentosVencidos' as const,
   },
   {
     id: 'activos',
@@ -105,7 +106,7 @@ const WIDGETS_CONFIG = [
     descripcion: 'Flota en operación clasificada por dependencia',
     gradiente: 'linear-gradient(135deg, #10B981 0%, #047857 100%)',
     icono: IcoActivos,
-    key: 'exportarActivos' as const,
+    key: 'activos' as const,
   },
   {
     id: 'dependencias',
@@ -113,7 +114,7 @@ const WIDGETS_CONFIG = [
     descripcion: 'Vehículos, alertas e indicador por secretaría',
     gradiente: 'linear-gradient(135deg, #8B5CF6 0%, #5B21B6 100%)',
     icono: IcoDependencia,
-    key: 'exportarResumenDependencias' as const,
+    key: 'resumenDependencias' as const,
   },
   {
     id: 'costos',
@@ -176,19 +177,37 @@ export default function ReportesPage() {
     return { nombre: d.nombre, vehiculos: vehiculosDep.length, alertas: alertasDep.length, indicador };
   });
 
+  const exportData = {
+    inventario: {
+      encabezados: ['Placa', 'Tipo', 'Marca', 'Línea', 'Modelo', 'Dependencia', 'Responsable', 'Estado'],
+      filas: vehiculos.map((v) => [v.placa, v.tipo_vehiculo_nombre || '', v.marca || '', v.linea || '', v.modelo || '', v.dependencia_nombre || '', v.responsable_nombre || '', v.estado_nombre || '']),
+    },
+    documentosVencidos: {
+      encabezados: ['Placa', 'Tipo de documento', 'Fecha de vencimiento'],
+      filas: documentosVencidos.map((d) => [d.vehiculo_placa || '', d.tipo_documento_nombre || '', d.fecha_vencimiento ? new Date(d.fecha_vencimiento).toLocaleDateString('es-CO') : '']),
+    },
+    activos: {
+      encabezados: ['Placa', 'Tipo', 'Dependencia', 'Responsable'],
+      filas: vehiculosActivos.map((v) => [v.placa, v.tipo_vehiculo_nombre || '', v.dependencia_nombre || '', v.responsable_nombre || '']),
+    },
+    resumenDependencias: {
+      encabezados: ['Dependencia', 'Vehículos', 'Alertas', 'Indicador'],
+      filas: resumenDependencias.map((d) => [d.nombre, d.vehiculos, d.alertas, `${d.indicador}%`]),
+    },
+  };
+
   const exportHandlers = {
-    exportarInventario: () => exportarCSV('inventario_vehiculos',
-      ['Placa', 'Tipo', 'Marca', 'Línea', 'Modelo', 'Dependencia', 'Responsable', 'Estado'],
-      vehiculos.map((v) => [v.placa, v.tipo_vehiculo_nombre || '', v.marca || '', v.linea || '', v.modelo || '', v.dependencia_nombre || '', v.responsable_nombre || '', v.estado_nombre || ''])),
-    exportarDocumentosVencidos: () => exportarCSV('documentos_vencidos',
-      ['Placa', 'Tipo de documento', 'Fecha de vencimiento'],
-      documentosVencidos.map((d) => [d.vehiculo_placa || '', d.tipo_documento_nombre || '', d.fecha_vencimiento ? new Date(d.fecha_vencimiento).toLocaleDateString('es-CO') : ''])),
-    exportarActivos: () => exportarCSV('vehiculos_activos',
-      ['Placa', 'Tipo', 'Dependencia', 'Responsable'],
-      vehiculosActivos.map((v) => [v.placa, v.tipo_vehiculo_nombre || '', v.dependencia_nombre || '', v.responsable_nombre || ''])),
-    exportarResumenDependencias: () => exportarCSV('resumen_por_dependencia',
-      ['Dependencia', 'Vehículos', 'Alertas', 'Indicador'],
-      resumenDependencias.map((d) => [d.nombre, d.vehiculos, d.alertas, `${d.indicador}%`])),
+    exportarInventarioCSV: () => exportarCSV('inventario_vehiculos', exportData.inventario.encabezados, exportData.inventario.filas),
+    exportarInventarioExcel: () => exportarExcel('inventario_vehiculos', 'Inventario', exportData.inventario.encabezados, exportData.inventario.filas),
+
+    exportarDocumentosVencidosCSV: () => exportarCSV('documentos_vencidos', exportData.documentosVencidos.encabezados, exportData.documentosVencidos.filas),
+    exportarDocumentosVencidosExcel: () => exportarExcel('documentos_vencidos', 'Documentos Vencidos', exportData.documentosVencidos.encabezados, exportData.documentosVencidos.filas),
+
+    exportarActivosCSV: () => exportarCSV('vehiculos_activos', exportData.activos.encabezados, exportData.activos.filas),
+    exportarActivosExcel: () => exportarExcel('vehiculos_activos', 'Vehiculos Activos', exportData.activos.encabezados, exportData.activos.filas),
+
+    exportarResumenDependenciasCSV: () => exportarCSV('resumen_por_dependencia', exportData.resumenDependencias.encabezados, exportData.resumenDependencias.filas),
+    exportarResumenDependenciasExcel: () => exportarExcel('resumen_por_dependencia', 'Resumen Dependencias', exportData.resumenDependencias.encabezados, exportData.resumenDependencias.filas),
   };
 
   if (cargando) {
@@ -265,10 +284,37 @@ export default function ReportesPage() {
                     <>
                       <Button
                         size="small"
-                        onClick={w.key ? exportHandlers[w.key] : undefined}
+                        onClick={
+                          w.key === 'inventario'
+                            ? exportHandlers.exportarInventarioCSV
+                            : w.key === 'documentosVencidos'
+                            ? exportHandlers.exportarDocumentosVencidosCSV
+                            : w.key === 'activos'
+                            ? exportHandlers.exportarActivosCSV
+                            : w.key === 'resumenDependencias'
+                            ? exportHandlers.exportarResumenDependenciasCSV
+                            : undefined
+                        }
                         sx={{ color: '#fff', bgcolor: 'rgba(255,255,255,0.18)', '&:hover': { bgcolor: 'rgba(255,255,255,0.28)' }, fontWeight: 700, fontSize: '0.72rem', px: 1.5, py: 0.4, borderRadius: 2 }}
                       >
                         CSV
+                      </Button>
+                      <Button
+                        size="small"
+                        onClick={
+                          w.key === 'inventario'
+                            ? exportHandlers.exportarInventarioExcel
+                            : w.key === 'documentosVencidos'
+                            ? exportHandlers.exportarDocumentosVencidosExcel
+                            : w.key === 'activos'
+                            ? exportHandlers.exportarActivosExcel
+                            : w.key === 'resumenDependencias'
+                            ? exportHandlers.exportarResumenDependenciasExcel
+                            : undefined
+                        }
+                        sx={{ color: '#fff', bgcolor: 'rgba(255,255,255,0.18)', '&:hover': { bgcolor: 'rgba(255,255,255,0.28)' }, fontWeight: 700, fontSize: '0.72rem', px: 1.5, py: 0.4, borderRadius: 2 }}
+                      >
+                        Excel
                       </Button>
                       <Tooltip title="Disponible en Fase 4">
                         <span>
@@ -326,7 +372,10 @@ export default function ReportesPage() {
       <Paper sx={{ p: 3 }}>
         <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}>
           <Typography variant="subtitle1" fontWeight={600}>Resumen por dependencia</Typography>
-          <Button size="small" startIcon={<DownloadIcon />} onClick={exportHandlers.exportarResumenDependencias}>CSV</Button>
+          <Stack direction="row" spacing={1}>
+            <Button size="small" startIcon={<DownloadIcon />} onClick={exportHandlers.exportarResumenDependenciasCSV}>CSV</Button>
+            <Button size="small" startIcon={<DownloadIcon />} onClick={exportHandlers.exportarResumenDependenciasExcel}>Excel</Button>
+          </Stack>
         </Stack>
         {resumenDependencias.length === 0 ? (
           <Typography variant="body2" color="text.secondary">No hay dependencias registradas todavía.</Typography>
