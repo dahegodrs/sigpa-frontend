@@ -38,7 +38,12 @@ export default function DocumentoUploadDialog({ abierto, vehiculoId, tiposDocume
 
   const tipoSeleccionado = tiposDocumento.find((t) => t.id === tipoDocumentoId);
   const nombreTipoSeleccionado = (tipoSeleccionado?.nombre || '').trim().toLowerCase();
-  const requiereFechas = nombreTipoSeleccionado !== 'tarjeta de propiedad' && nombreTipoSeleccionado !== 'otros';
+  const esTipoSinVencimiento =
+    nombreTipoSeleccionado === 'tarjeta de propiedad' ||
+    nombreTipoSeleccionado === 'otros' ||
+    nombreTipoSeleccionado === 'otro' ||
+    nombreTipoSeleccionado.startsWith('otro ');
+  const requiereFechas = !esTipoSinVencimiento;
 
   const limpiar = () => {
     setTipoDocumentoId('');
