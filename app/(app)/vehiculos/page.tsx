@@ -58,6 +58,7 @@ function VehiculosContent() {
   // Si viene estado_id desde URL (ej: click en card del dashboard) usarlo directamente
   const estadoIdUrl = searchParams.get('estado_id');
   const [estadoId, setEstadoId] = useState<number | ''>(estadoIdUrl ? Number(estadoIdUrl) : '');
+  const origenBusqueda = searchParams.get('origen');
 
   // Sincroniza la placa cuando cambia el parámetro de la URL (ej: búsqueda
   // desde el topbar mientras ya se está en /vehiculos — Next.js no remonta
@@ -74,16 +75,18 @@ function VehiculosContent() {
   const [pageSize, setPageSize] = useState(20);
   const [dialogoAbierto, setDialogoAbierto] = useState(false);
   // Flag para no sobrescribir el estado_id que vino de la URL con el default "Activo"
-  const [estadoInicialAplicado, setEstadoInicialAplicado] = useState(!!estadoIdUrl);
+  // y para permitir búsquedas globales desde topbar sin forzar estado.
+  const [estadoInicialAplicado, setEstadoInicialAplicado] = useState(!!estadoIdUrl || origenBusqueda === 'topbar');
 
-  // Pre-seleccionar "Activo" si no vino estado_id por URL
+  // Pre-seleccionar "Activo" solo cuando NO venga estado_id por URL
+  // y NO venga búsqueda originada desde topbar.
   useEffect(() => {
     if (!estadoInicialAplicado && catalogos?.estados_vehiculo.length) {
       const activo = catalogos.estados_vehiculo.find((e) => e.nombre === 'Activo');
       if (activo) {
         setEstadoId(activo.id);
-        setEstadoInicialAplicado(true);
       }
+      setEstadoInicialAplicado(true);
     }
   }, [catalogos, estadoInicialAplicado]);
 

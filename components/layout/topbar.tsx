@@ -33,7 +33,7 @@ export default function Topbar({ titulo, mostrarBotonMenu, onAbrirMenu }: { titu
 
   const buscar = (e: KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter' && busqueda.trim()) {
-      router.push(`/vehiculos?placa=${encodeURIComponent(busqueda.trim())}`);
+      router.push(`/vehiculos?placa=${encodeURIComponent(busqueda.trim())}&origen=topbar`);
     }
   };
 
