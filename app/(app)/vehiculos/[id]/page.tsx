@@ -56,10 +56,15 @@ function diasHastaVencimiento(fechaVencimiento?: string | null): number | null {
   return Math.ceil((vence.getTime() - hoy.getTime()) / (1000 * 60 * 60 * 24));
 }
 
+function esTipoSinVencimiento(tipoDocumentoNombre?: string | null): boolean {
+  const tipo = (tipoDocumentoNombre || '').trim().toLowerCase();
+  return tipo === 'tarjeta de propiedad' || tipo === 'otros';
+}
+
 function DocumentoCard({ doc, vehiculo, puedeEditar, puedeEliminar, onSubir, onEliminado }: { doc: Documento; vehiculo: Vehiculo; puedeEditar: boolean; puedeEliminar: boolean; onSubir: () => void; onEliminado: () => void }) {
   const theme = useTheme();
   const Icono = ICONO_POR_TIPO[doc.tipo_documento_nombre || ''] || DescriptionOutlinedIcon;
-  const dias = diasHastaVencimiento(doc.fecha_vencimiento);
+  const dias = esTipoSinVencimiento(doc.tipo_documento_nombre) ? null : diasHastaVencimiento(doc.fecha_vencimiento);
 
   // El estado visual (badge, color de borde) se calcula EN TIEMPO REAL a
   // partir de los días restantes, en vez de usar directamente

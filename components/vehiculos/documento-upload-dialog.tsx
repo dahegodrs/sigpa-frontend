@@ -36,6 +36,10 @@ export default function DocumentoUploadDialog({ abierto, vehiculoId, tiposDocume
   const [subiendo, setSubiendo] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const tipoSeleccionado = tiposDocumento.find((t) => t.id === tipoDocumentoId);
+  const nombreTipoSeleccionado = (tipoSeleccionado?.nombre || '').trim().toLowerCase();
+  const requiereFechas = nombreTipoSeleccionado !== 'tarjeta de propiedad' && nombreTipoSeleccionado !== 'otros';
+
   const limpiar = () => {
     setTipoDocumentoId('');
     setFechaExpedicion('');
@@ -58,6 +62,10 @@ export default function DocumentoUploadDialog({ abierto, vehiculoId, tiposDocume
     }
     if (!archivo) {
       setError('Selecciona el archivo a subir');
+      return;
+    }
+    if (requiereFechas && (!fechaExpedicion || !fechaVencimiento)) {
+      setError('Para este tipo de documento, la fecha de vigencia y de vencimiento son obligatorias');
       return;
     }
 
@@ -109,28 +117,34 @@ export default function DocumentoUploadDialog({ abierto, vehiculoId, tiposDocume
             </TextField>
           </Grid>
 
-          <Grid item xs={6}>
-            <TextField
-              label="Fecha de vigencia"
-              type="date"
-              fullWidth
-              size="small"
-              InputLabelProps={{ shrink: true }}
-              value={fechaExpedicion}
-              onChange={(e) => setFechaExpedicion(e.target.value)}
-            />
-          </Grid>
-          <Grid item xs={6}>
-            <TextField
-              label="Fecha de vencimiento"
-              type="date"
-              fullWidth
-              size="small"
-              InputLabelProps={{ shrink: true }}
-              value={fechaVencimiento}
-              onChange={(e) => setFechaVencimiento(e.target.value)}
-            />
-          </Grid>
+          {requiereFechas && (
+            <>
+              <Grid item xs={6}>
+                <TextField
+                  label="Fecha de vigencia"
+                  type="date"
+                  fullWidth
+                  size="small"
+                  InputLabelProps={{ shrink: true }}
+                  value={fechaExpedicion}
+                  onChange={(e) => setFechaExpedicion(e.target.value)}
+                  required
+                />
+              </Grid>
+              <Grid item xs={6}>
+                <TextField
+                  label="Fecha de vencimiento"
+                  type="date"
+                  fullWidth
+                  size="small"
+                  InputLabelProps={{ shrink: true }}
+                  value={fechaVencimiento}
+                  onChange={(e) => setFechaVencimiento(e.target.value)}
+                  required
+                />
+              </Grid>
+            </>
+          )}
 
           <Grid item xs={12}>
             <TextField
