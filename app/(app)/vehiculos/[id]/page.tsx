@@ -75,7 +75,9 @@ function DocumentoCard({ doc, vehiculo, puedeEditar, puedeEliminar, onSubir, onE
   // etiqueta de arriba sigue diciendo "Próximo a vencer". Si hay fecha de
   // vencimiento, siempre se confía en el cálculo con la fecha real; solo se
   // usa el campo de BD como respaldo cuando no hay fecha (ej. "Pendiente").
-  const estadoReal = dias !== null ? (dias < 0 ? 'Vencido' : dias <= 45 ? 'Proximo_a_vencer' : 'Vigente') : doc.estado_documento;
+  const estadoReal = dias !== null
+    ? (dias < 0 ? 'Vencido' : dias <= 45 ? 'Proximo_a_vencer' : 'Vigente')
+    : (esTipoSinVencimiento(doc.tipo_documento_nombre) && !!doc.archivo_url ? 'Vigente' : doc.estado_documento);
   const estaVencido = estadoReal === 'Vencido';
   const estaProximo = estadoReal === 'Proximo_a_vencer';
   const estaVigente = estadoReal === 'Vigente';
