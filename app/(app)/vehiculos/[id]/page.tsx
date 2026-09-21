@@ -58,7 +58,7 @@ function diasHastaVencimiento(fechaVencimiento?: string | null): number | null {
 
 function esTipoSinVencimiento(tipoDocumentoNombre?: string | null): boolean {
   const tipo = (tipoDocumentoNombre || '').trim().toLowerCase();
-  return tipo === 'tarjeta de propiedad' || tipo === 'otros';
+  return tipo === 'tarjeta de propiedad' || tipo === 'otro' || tipo === 'otros';
 }
 
 function DocumentoCard({ doc, vehiculo, puedeEditar, puedeEliminar, onSubir, onEliminado }: { doc: Documento; vehiculo: Vehiculo; puedeEditar: boolean; puedeEliminar: boolean; onSubir: () => void; onEliminado: () => void }) {
@@ -79,7 +79,7 @@ function DocumentoCard({ doc, vehiculo, puedeEditar, puedeEliminar, onSubir, onE
   const estaVencido = estadoReal === 'Vencido';
   const estaProximo = estadoReal === 'Proximo_a_vencer';
   const estaVigente = estadoReal === 'Vigente';
-  const colorBorde = estaVencido ? theme.palette.error.main : estaProximo ? '#F59E0B' : estaVigente ? '#16A34A' : 'transparent';
+  const colorBorde = estaVencido ? theme.palette.error.main : estaProximo ? '#F59E0B' : estaVigente ? '#16A34A' : theme.palette.divider;
   const IconoEstado = estaVencido ? ErrorOutlineIcon : estaProximo ? WarningAmberIcon : estaVigente ? CheckCircleOutlineIcon : null;
   const colorIconoEstado = estaVencido ? 'error.main' : estaProximo ? '#F59E0B' : '#16A34A';
   const [dialogoNotificar, setDialogoNotificar] = useState(false);
@@ -235,8 +235,14 @@ export default function VehiculoDetallePage() {
       alertasService.listar(false),
     ])
       .then(([v, docs, hist, todasLasAlertas]) => {
-        setVehiculo(v); setDocumentos(docs || []); setHistorial(hist || []);
-        setAlertasVehiculo((todasLasAlertas || []).filter((a) => a.vehiculo_id === vehiculoId));
+        const docsSeguros = Array.isArray(docs) ? docs : [];
+        const histSeguro = Array.isArray(hist) ? hist : [];
+        const alertasSeguras = Array.isArray(todasLasAlertas) ? todasLasAlertas : [];
+
+        setVehiculo(v);
+        setDocumentos(docsSeguros);
+        setHistorial(histSeguro);
+        setAlertasVehiculo(alertasSeguras.filter((a) => a.vehiculo_id === vehiculoId));
       })
       .catch((err) => setError(err instanceof ApiError ? err.message : 'No se pudo cargar el vehículo'))
       .finally(() => setCargando(false));
