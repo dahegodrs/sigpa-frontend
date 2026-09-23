@@ -7,6 +7,7 @@ import {
 } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import PictureAsPdfOutlinedIcon from '@mui/icons-material/PictureAsPdfOutlined';
+import ImageOutlinedIcon from '@mui/icons-material/ImageOutlined';
 import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
 import AppShell from '@/components/layout/app-shell';
 import { programacionesService } from '@/lib/services';
@@ -41,6 +42,7 @@ export default function ProgramacionDetallePage() {
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [generandoPDF, setGenerandoPDF] = useState(false);
+  const [generandoJPG, setGenerandoJPG] = useState(false);
 
   // El backend devuelve TODAS las filas de la programación (incluidas las
   // que aún no fueron marcadas como "programado"), porque no se deben
@@ -79,26 +81,63 @@ export default function ProgramacionDetallePage() {
             </Button>
           )}
           {prog && (
-            <Button
-              variant="contained"
-              size="small"
-              startIcon={generandoPDF ? <CircularProgress size={14} color="inherit" /> : <PictureAsPdfOutlinedIcon />}
-              disabled={generandoPDF}
-              onClick={async () => {
-                setGenerandoPDF(true);
-                try {
-                  await generarPDFDesdeElemento('programacion-print-area', `programacion_${prog.fecha}.pdf`);
-                } catch {
-                  // La generación de PDF es una conveniencia — si falla no
-                  // bloqueamos al usuario con un error intrusivo, solo se
-                  // deja de descargar el archivo.
-                } finally {
-                  setGenerandoPDF(false);
-                }
-              }}
-            >
-              {generandoPDF ? 'Generando…' : 'Generar PDF'}
-            </Button>
+            <>
+              <Button
+                variant="outlined"
+                size="small"
+                startIcon={generandoJPG ? <CircularProgress size={14} color="inherit" /> : <ImageOutlinedIcon />}
+                disabled={generandoJPG}
+                onClick={async () => {
+                  setGenerandoJPG(true);
+                  try {
+                    const html2canvasModule = await import('html2canvas');
+                    const html2canvas = html2canvasModule.default;
+                    const el = document.getElementById('programacion-print-area');
+                    if (!el) return;
+                    const canvas = await html2canvas(el, {
+                      backgroundColor: '#ffffff',
+                      scale: 2,
+                      useCORS: true,
+                      logging: false,
+                    });
+                    const dataURL = canvas.toDataURL('image/jpeg', 0.95);
+                    const a = document.createElement('a');
+                    a.href = dataURL;
+                    a.download = `programacion_${prog.fecha}.jpg`;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                  } catch {
+                    // Si falla la generación de imagen, no bloqueamos al usuario.
+                  } finally {
+                    setGenerandoJPG(false);
+                  }
+                }}
+              >
+                {generandoJPG ? 'Generando…' : 'Descargar JPG'}
+              </Button>
+
+              <Button
+                variant="contained"
+                size="small"
+                startIcon={generandoPDF ? <CircularProgress size={14} color="inherit" /> : <PictureAsPdfOutlinedIcon />}
+                disabled={generandoPDF}
+                onClick={async () => {
+                  setGenerandoPDF(true);
+                  try {
+                    await generarPDFDesdeElemento('programacion-print-area', `programacion_${prog.fecha}.pdf`);
+                  } catch {
+                    // La generación de PDF es una conveniencia — si falla no
+                    // bloqueamos al usuario con un error intrusivo, solo se
+                    // deja de descargar el archivo.
+                  } finally {
+                    setGenerandoPDF(false);
+                  }
+                }}
+              >
+                {generandoPDF ? 'Generando…' : 'Generar PDF'}
+              </Button>
+            </>
           )}
         </Stack>
       </Stack>
