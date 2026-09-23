@@ -100,13 +100,29 @@ export default function ProgramacionDetallePage() {
                       useCORS: true,
                       logging: false,
                     });
-                    const dataURL = canvas.toDataURL('image/jpeg', 0.95);
-                    const a = document.createElement('a');
-                    a.href = dataURL;
-                    a.download = `programacion_${prog.fecha}.jpg`;
-                    document.body.appendChild(a);
-                    a.click();
-                    document.body.removeChild(a);
+
+                    const exportarConBlob = async (mime: 'image/jpeg' | 'image/png', extension: 'jpg' | 'png') => {
+                      const blob: Blob | null = await new Promise((resolve) =>
+                        canvas.toBlob((b) => resolve(b), mime, mime === 'image/jpeg' ? 0.95 : undefined),
+                      );
+                      if (!blob || blob.size === 0) return false;
+                      const objectUrl = URL.createObjectURL(blob);
+                      const a = document.createElement('a');
+                      a.href = objectUrl;
+                      a.download = `programacion_${prog.fecha}.${extension}`;
+                      document.body.appendChild(a);
+                      a.click();
+                      document.body.removeChild(a);
+                      URL.revokeObjectURL(objectUrl);
+                      return true;
+                    };
+
+                    const okJpg = await exportarConBlob('image/jpeg', 'jpg');
+                    if (!okJpg) {
+                      // Fallback robusto: algunos navegadores/visores fallan con JPEG
+                      // generado desde canvas; PNG es más estable.
+                      await exportarConBlob('image/png', 'png');
+                    }
                   } catch {
                     // Si falla la generación de imagen, no bloqueamos al usuario.
                   } finally {
