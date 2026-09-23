@@ -3,7 +3,7 @@ import ThemeRegistry from '@/components/theme-registry';
 import { AuthProvider } from '@/contexts/auth-context';
 
 export const metadata: Metadata = {
-  title: 'SIGPA — Gestión del Parque Automotor',
+  title: 'SIGPA Gestión del Parque Automotor',
   description: 'Sistema Integral de Gestión del Parque Automotor y Control de Vencimientos Documentales para la Alcaldía de Funza.',
   applicationName: 'SIGPA',
   keywords: ['parque automotor', 'vehículos', 'alcaldía', 'funza', 'gestión', 'SOAT', 'documentos'],
@@ -11,7 +11,7 @@ export const metadata: Metadata = {
   themeColor: '#DA151C',
   colorScheme: 'light dark',
   openGraph: {
-    title: 'SIGPA — Gestión del Parque Automotor',
+    title: 'SIGPA Gestión del Parque Automotor',
     description: 'Sistema Integral de Gestión del Parque Automotor',
     siteName: 'SIGPA',
     locale: 'es_CO',
