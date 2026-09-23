@@ -94,35 +94,44 @@ export default function ProgramacionDetallePage() {
                     const html2canvas = html2canvasModule.default;
                     const el = document.getElementById('programacion-print-area');
                     if (!el) return;
-                    const canvas = await html2canvas(el, {
+
+                    // Importante: el área de impresión está en display:none en pantalla.
+                    // Por eso la clonamos temporalmente en un contenedor visible fuera del viewport
+                    // para que html2canvas sí tenga layout real al renderizar.
+                    const sandbox = document.createElement('div');
+                    sandbox.style.position = 'fixed';
+                    sandbox.style.left = '-100000px';
+                    sandbox.style.top = '0';
+                    sandbox.style.width = '1400px';
+                    sandbox.style.background = '#fff';
+                    sandbox.style.zIndex = '-1';
+
+                    const clon = el.cloneNode(true) as HTMLElement;
+                    clon.style.display = 'block';
+                    clon.style.position = 'static';
+                    clon.style.width = '1400px';
+                    clon.style.padding = '16px';
+                    clon.style.background = '#fff';
+
+                    sandbox.appendChild(clon);
+                    document.body.appendChild(sandbox);
+
+                    const canvas = await html2canvas(clon, {
                       backgroundColor: '#ffffff',
                       scale: 2,
                       useCORS: true,
                       logging: false,
                     });
 
-                    const exportarConBlob = async (mime: 'image/jpeg' | 'image/png', extension: 'jpg' | 'png') => {
-                      const blob: Blob | null = await new Promise((resolve) =>
-                        canvas.toBlob((b) => resolve(b), mime, mime === 'image/jpeg' ? 0.95 : undefined),
-                      );
-                      if (!blob || blob.size === 0) return false;
-                      const objectUrl = URL.createObjectURL(blob);
-                      const a = document.createElement('a');
-                      a.href = objectUrl;
-                      a.download = `programacion_${prog.fecha}.${extension}`;
-                      document.body.appendChild(a);
-                      a.click();
-                      document.body.removeChild(a);
-                      URL.revokeObjectURL(objectUrl);
-                      return true;
-                    };
+                    const dataURL = canvas.toDataURL('image/png');
+                    const a = document.createElement('a');
+                    a.href = dataURL;
+                    a.download = `programacion_${prog.fecha}.png`;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
 
-                    const okJpg = await exportarConBlob('image/jpeg', 'jpg');
-                    if (!okJpg) {
-                      // Fallback robusto: algunos navegadores/visores fallan con JPEG
-                      // generado desde canvas; PNG es más estable.
-                      await exportarConBlob('image/png', 'png');
-                    }
+                    document.body.removeChild(sandbox);
                   } catch {
                     // Si falla la generación de imagen, no bloqueamos al usuario.
                   } finally {
@@ -130,7 +139,7 @@ export default function ProgramacionDetallePage() {
                   }
                 }}
               >
-                {generandoJPG ? 'Generando…' : 'Descargar JPG'}
+                {generandoJPG ? 'Generando…' : 'Descargar imagen (PNG)'}
               </Button>
 
               <Button
