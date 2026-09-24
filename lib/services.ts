@@ -57,16 +57,24 @@ export const dashboardService = {
   obtenerResumen: () => api.get<DashboardCompleto>('/dashboard'),
 };
 
+export interface CoberturaAlertas {
+	proximos_total: number;
+	coinciden_umbral_hoy: number;
+	alertas_generadas_hoy: number;
+	documentos_proximos_sin_alerta_hoy: number;
+}
+
 export const alertasService = {
-  listar: (soloPendientes = false) => api.get<Alerta[]>(`/alertas${soloPendientes ? '?pendientes=true' : ''}`),
-  ejecutarRevisionManual: () => api.post('/alertas/ejecutar-revision'),
-  marcarLeida: (id: number) => api.put(`/alertas/${id}/leida`),
-  marcarTodasLeidas: () => api.put('/alertas/marcar-todas-leidas'),
-  listarConfig: () => api.get<ConfigAlerta[]>('/alertas/config'),
-  crearConfig: (data: { dias_antes: number; nivel: string }) => api.post<{ id: number }>('/alertas/config', data),
-  actualizarConfig: (id: number, data: { dias_antes: number; nivel: string; activo: boolean }) =>
-    api.put(`/alertas/config/${id}`, data),
-  eliminarConfig: (id: number) => api.delete(`/alertas/config/${id}`),
+	listar: (soloPendientes = false) => api.get<Alerta[]>(`/alertas${soloPendientes ? '?pendientes=true' : ''}`),
+	obtenerCobertura: () => api.get<CoberturaAlertas>('/alertas/cobertura'),
+	ejecutarRevisionManual: () => api.post('/alertas/ejecutar-revision'),
+	marcarLeida: (id: number) => api.put(`/alertas/${id}/leida`),
+	marcarTodasLeidas: () => api.put('/alertas/marcar-todas-leidas'),
+	listarConfig: () => api.get<ConfigAlerta[]>('/alertas/config'),
+	crearConfig: (data: { dias_antes: number; nivel: string }) => api.post<{ id: number }>('/alertas/config', data),
+	actualizarConfig: (id: number, data: { dias_antes: number; nivel: string; activo: boolean }) =>
+		api.put(`/alertas/config/${id}`, data),
+	eliminarConfig: (id: number) => api.delete(`/alertas/config/${id}`),
 };
 
 export const historialService = {

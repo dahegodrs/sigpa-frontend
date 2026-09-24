@@ -20,6 +20,7 @@ import DirectionsCarIcon from '@mui/icons-material/DirectionsCarOutlined';
 import { useAuth } from '@/contexts/auth-context';
 import AppShell from '@/components/layout/app-shell';
 import { alertasService, plantillaCorreoService, vehiculosService } from '@/lib/services';
+import type { CoberturaAlertas } from '@/lib/services';
 import { ApiError } from '@/lib/api-client';
 import type { Alerta, ConfigAlerta, Vehiculo } from '@/types';
 
@@ -74,6 +75,7 @@ export default function AlertasPage() {
   const [placasPorVehiculo, setPlacasPorVehiculo] = useState<Record<number, string>>({});
   const [filtroSeveridad, setFiltroSeveridad] = useState<Severidad | 'all'>('all');
   const [filtroLeida, setFiltroLeida] = useState<'all' | 'unread'>('all');
+  const [cobertura, setCobertura] = useState<CoberturaAlertas | null>(null);
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [dialogoNuevaRegla, setDialogoNuevaRegla] = useState(false);
@@ -85,10 +87,16 @@ export default function AlertasPage() {
 
   const cargar = useCallback(() => {
     setCargando(true); setError(null);
-    Promise.all([alertasService.listar(false), alertasService.listarConfig(), vehiculosService.listar({ page_size: 200 })])
-      .then(([listaAlertas, listaConfig, vehiculosRes]) => {
+    Promise.all([
+      alertasService.listar(false),
+      alertasService.listarConfig(),
+      vehiculosService.listar({ page_size: 200 }),
+      alertasService.obtenerCobertura(),
+    ])
+      .then(([listaAlertas, listaConfig, vehiculosRes, coberturaRes]) => {
         setAlertas(listaAlertas || []);
         setConfig(listaConfig || []);
+        setCobertura(coberturaRes || null);
         const mapa: Record<number, string> = {};
         (vehiculosRes.data || []).forEach((v: Vehiculo) => (mapa[v.id] = v.placa));
         setPlacasPorVehiculo(mapa);
@@ -198,6 +206,39 @@ export default function AlertasPage() {
           {mensajeRevision}
         </Alert>
       )}
+
+      {cobertura && (
+        <Grid container spacing={2} sx={{ mb: 3 }}>
+          <Grid item xs={12} sm={6} md={3}>
+            <Paper sx={{ p: 2, borderRadius: 2.5, bgcolor: '#F8FAFC', border: '1px solid', borderColor: 'divider' }}>
+              <Typography variant="caption" color="text.secondary" fontWeight={700}>Próximos a vencer (inventario)</Typography>
+              <Typography variant="h5" fontWeight={800}>{cobertura.proximos_total}</Typography>
+            </Paper>
+          </Grid>
+          <Grid item xs={12} sm={6} md={3}>
+            <Paper sx={{ p: 2, borderRadius: 2.5, bgcolor: '#EFF6FF', border: '1px solid', borderColor: '#BFDBFE' }}>
+              <Typography variant="caption" sx={{ color: '#1E40AF' }} fontWeight={700}>Coinciden con umbral hoy</Typography>
+              <Typography variant="h5" fontWeight={800} sx={{ color: '#1D4ED8' }}>{cobertura.coinciden_umbral_hoy}</Typography>
+            </Paper>
+          </Grid>
+          <Grid item xs={12} sm={6} md={3}>
+            <Paper sx={{ p: 2, borderRadius: 2.5, bgcolor: '#F0FDF4', border: '1px solid', borderColor: '#BBF7D0' }}>
+              <Typography variant="caption" sx={{ color: '#166534' }} fontWeight={700}>Alertas generadas hoy</Typography>
+              <Typography variant="h5" fontWeight={800} sx={{ color: '#15803D' }}>{cobertura.alertas_generadas_hoy}</Typography>
+            </Paper>
+          </Grid>
+          <Grid item xs={12} sm={6} md={3}>
+            <Paper sx={{ p: 2, borderRadius: 2.5, bgcolor: '#FFF7ED', border: '1px solid', borderColor: '#FED7AA' }}>
+              <Typography variant="caption" sx={{ color: '#9A3412' }} fontWeight={700}>Próximos sin alerta hoy</Typography>
+              <Typography variant="h5" fontWeight={800} sx={{ color: '#C2410C' }}>{cobertura.documentos_proximos_sin_alerta_hoy}</Typography>
+            </Paper>
+          </Grid>
+        </Grid>
+      )}
+
+      <Alert severity="info" sx={{ mb: 3 }}>
+        “Próximos a vencer” es inventario documental. “Alertas generadas hoy” depende de reglas por umbral (45/30/15/7/1/0). Por eso los totales pueden diferir.
+      </Alert>
 
       {/* KPIs de severidad — clickeables como filtro */}
       <Grid container spacing={2} sx={{ mb: 3 }}>
