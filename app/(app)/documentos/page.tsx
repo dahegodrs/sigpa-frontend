@@ -11,12 +11,14 @@ import GridViewIcon from '@mui/icons-material/GridView';
 import ViewListIcon from '@mui/icons-material/ViewList';
 import SearchIcon from '@mui/icons-material/Search';
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
+import EmailOutlinedIcon from '@mui/icons-material/EmailOutlined';
 import { useTheme, alpha } from '@mui/material/styles';
 import AppShell from '@/components/layout/app-shell';
 import StatusBadge from '@/components/ui/status-badge';
+import NotificarDocumentoDialog from '@/components/vehiculos/notificar-documento-dialog';
 import { documentosService } from '@/lib/services';
 import { ApiError } from '@/lib/api-client';
-import type { Documento, ConteoPorTipoDocumento } from '@/types';
+import type { Documento, ConteoPorTipoDocumento, Vehiculo } from '@/types';
 
 // ── Configuración visual por tipo de documento ─────────────────────────────
 
@@ -120,6 +122,7 @@ function DocumentosContent() {
   const [pageSize, setPageSize] = useState(24);
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [docParaNotificar, setDocParaNotificar] = useState<Documento | null>(null);
 
   useEffect(() => {
     documentosService.conteoPorTipo().then((res) => setCarpetas(res || [])).catch(() => setCarpetas([]));
@@ -295,13 +298,22 @@ function DocumentosContent() {
                       {doc.tamano_bytes ? ` · ${formatearTamano(doc.tamano_bytes)}` : ''}
                     </Typography>
                   </Box>
-                  {doc.archivo_url && (
-                    <Box sx={{ px: 1.5, pb: 1.5 }}>
+                  <Box sx={{ px: 1.5, pb: 1.5, display: 'flex', gap: 0.75 }}>
+                    {doc.archivo_url && (
                       <IconButton size="small" component="a" href={doc.archivo_url} target="_blank" rel="noopener" sx={{ bgcolor: 'action.hover', borderRadius: 1.5, p: 0.6 }}>
                         <OpenInNewIcon fontSize="small" />
                       </IconButton>
-                    </Box>
-                  )}
+                    )}
+                    <Tooltip title="Enviar correo de notificación">
+                      <IconButton
+                        size="small"
+                        onClick={() => setDocParaNotificar(doc)}
+                        sx={{ bgcolor: 'action.hover', borderRadius: 1.5, p: 0.6 }}
+                      >
+                        <EmailOutlinedIcon fontSize="small" />
+                      </IconButton>
+                    </Tooltip>
+                  </Box>
                 </Box>
               </Grid>
             );
@@ -334,11 +346,18 @@ function DocumentosContent() {
                     <TableCell>{new Date(doc.fecha_carga).toLocaleDateString('es-CO')}</TableCell>
                     <TableCell>{doc.tamano_bytes ? formatearTamano(doc.tamano_bytes) : '—'}</TableCell>
                     <TableCell align="right">
-                      {doc.archivo_url && (
-                        <IconButton size="small" component="a" href={doc.archivo_url} target="_blank" rel="noopener">
-                          <OpenInNewIcon fontSize="small" />
-                        </IconButton>
-                      )}
+                      <Stack direction="row" spacing={0.5} justifyContent="flex-end">
+                        {doc.archivo_url && (
+                          <IconButton size="small" component="a" href={doc.archivo_url} target="_blank" rel="noopener">
+                            <OpenInNewIcon fontSize="small" />
+                          </IconButton>
+                        )}
+                        <Tooltip title="Enviar correo de notificación">
+                          <IconButton size="small" onClick={() => setDocParaNotificar(doc)}>
+                            <EmailOutlinedIcon fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
+                      </Stack>
                     </TableCell>
                   </TableRow>
                 ))}
@@ -358,6 +377,20 @@ function DocumentosContent() {
           onRowsPerPageChange={(e) => { setPageSize(Number(e.target.value)); setPage(0); }}
           rowsPerPageOptions={[12, 24, 48]}
           labelRowsPerPage="Por página"
+        />
+      )}
+
+      {docParaNotificar && (
+        <NotificarDocumentoDialog
+          abierto={!!docParaNotificar}
+          doc={docParaNotificar}
+          vehiculo={{
+            id: docParaNotificar.vehiculo_id,
+            placa: docParaNotificar.vehiculo_placa || '—',
+            dependencia_nombre: 'la dependencia responsable',
+            responsable_nombre: 'el funcionario responsable',
+          } as Vehiculo}
+          onCerrar={() => setDocParaNotificar(null)}
         />
       )}
     </AppShell>
