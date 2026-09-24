@@ -194,4 +194,7 @@ export const plantillaCorreoService = {
   obtenerSolicitudVehiculo: () => api.get<PlantillaSolicitud>('/plantillas-correo/solicitud-vehiculo'),
   guardarSolicitudVehiculo: (data: PlantillaSolicitud) =>
     api.put('/plantillas-correo/solicitud-vehiculo', data),
+  obtenerAlertaDocumental: () => api.get<PlantillaSolicitud>('/plantillas-correo/alerta-documental'),
+  guardarAlertaDocumental: (data: PlantillaSolicitud) =>
+    api.put('/plantillas-correo/alerta-documental', data),
 };

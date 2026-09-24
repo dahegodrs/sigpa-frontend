@@ -5,11 +5,13 @@ import {
   Box, Paper, Typography, CircularProgress, Alert, Stack, Button,
   ToggleButtonGroup, ToggleButton, Chip, Switch, Grid, Dialog,
   DialogTitle, DialogContent, DialogActions, TextField, MenuItem, Divider,
+  Tooltip,
 } from '@mui/material';
 import { alpha, useTheme } from '@mui/material/styles';
 import DoneAllIcon from '@mui/icons-material/DoneAll';
 import AddIcon from '@mui/icons-material/Add';
 import RefreshIcon from '@mui/icons-material/Refresh';
+import EditNoteIcon from '@mui/icons-material/EditNote';
 import NotificationsNoneIcon from '@mui/icons-material/NotificationsNone';
 import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
 import WarningAmberOutlinedIcon from '@mui/icons-material/WarningAmberOutlined';
@@ -17,7 +19,7 @@ import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import DirectionsCarIcon from '@mui/icons-material/DirectionsCarOutlined';
 import { useAuth } from '@/contexts/auth-context';
 import AppShell from '@/components/layout/app-shell';
-import { alertasService, vehiculosService } from '@/lib/services';
+import { alertasService, plantillaCorreoService, vehiculosService } from '@/lib/services';
 import { ApiError } from '@/lib/api-client';
 import type { Alerta, ConfigAlerta, Vehiculo } from '@/types';
 
@@ -77,6 +79,7 @@ export default function AlertasPage() {
   const [dialogoNuevaRegla, setDialogoNuevaRegla] = useState(false);
   const [ejecutandoRevision, setEjecutandoRevision] = useState(false);
   const [mensajeRevision, setMensajeRevision] = useState<string | null>(null);
+  const [dialogoPlantilla, setDialogoPlantilla] = useState(false);
 
   const esAdministrador = usuario?.rol_nombre === 'Administrador';
 
@@ -170,6 +173,16 @@ export default function AlertasPage() {
               disabled={ejecutandoRevision}
             >
               {ejecutandoRevision ? 'Revisando…' : 'Ejecutar revisión ahora'}
+            </Button>
+          )}
+          {esAdministrador && (
+            <Button
+              variant="outlined"
+              size="small"
+              startIcon={<EditNoteIcon />}
+              onClick={() => setDialogoPlantilla(true)}
+            >
+              Editar plantilla correo
             </Button>
           )}
           {esAdministrador && (
@@ -311,7 +324,144 @@ export default function AlertasPage() {
         onCerrar={() => setDialogoNuevaRegla(false)}
         onCreada={() => { setDialogoNuevaRegla(false); cargar(); }}
       />
+
+      <PlantillaAlertaDocumentalDialog
+        abierto={dialogoPlantilla}
+        onCerrar={() => setDialogoPlantilla(false)}
+      />
     </AppShell>
+  );
+}
+
+const VARIABLES_PLANTILLA_ALERTA = [
+  { clave: '{{placa}}', descripcion: 'Placa del vehículo' },
+  { clave: '{{tipo_documento}}', descripcion: 'Nombre del documento (SOAT, Tecnomecánica, etc.)' },
+  { clave: '{{dependencia}}', descripcion: 'Dependencia responsable del vehículo' },
+  { clave: '{{fecha_vencimiento}}', descripcion: 'Fecha de vencimiento del documento' },
+  { clave: '{{dias_para_vencer_texto}}', descripcion: 'Texto relativo (ej. "en 7 días", "hace 2 días")' },
+  { clave: '{{estado_alerta}}', descripcion: 'Nivel de alerta (Preventiva, Urgente, Crítica...)' },
+  { clave: '{{estado_alerta_texto}}', descripcion: 'Estado legible (próximo a vencer / vencido)' },
+  { clave: '{{correo_contacto}}', descripcion: 'Correo de contacto institucional' },
+];
+
+function PlantillaAlertaDocumentalDialog({ abierto, onCerrar }: { abierto: boolean; onCerrar: () => void }) {
+  const [asunto, setAsunto] = useState('');
+  const [cuerpo, setCuerpo] = useState('');
+  const [cargando, setCargando] = useState(false);
+  const [guardando, setGuardando] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [exito, setExito] = useState(false);
+
+  useEffect(() => {
+    if (!abierto) return;
+    setCargando(true);
+    setError(null);
+    setExito(false);
+    plantillaCorreoService.obtenerAlertaDocumental()
+      .then((res) => {
+        setAsunto(res.asunto || '');
+        setCuerpo(res.cuerpo_html || '');
+      })
+      .catch((err) => setError(err instanceof ApiError ? err.message : 'No se pudo cargar la plantilla'))
+      .finally(() => setCargando(false));
+  }, [abierto]);
+
+  const guardar = async () => {
+    if (!asunto.trim() || !cuerpo.trim()) {
+      setError('El asunto y el cuerpo son obligatorios');
+      return;
+    }
+    setGuardando(true);
+    setError(null);
+    try {
+      await plantillaCorreoService.guardarAlertaDocumental({
+        asunto: asunto.trim(),
+        cuerpo_html: cuerpo.trim(),
+      });
+      setExito(true);
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : 'No se pudo guardar la plantilla');
+    } finally {
+      setGuardando(false);
+    }
+  };
+
+  return (
+    <Dialog open={abierto} onClose={onCerrar} maxWidth="sm" fullWidth PaperProps={{ sx: { borderRadius: 3 } }}>
+      <DialogTitle>Plantilla de correo — Alertas documentales</DialogTitle>
+      <DialogContent>
+        <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+          Esta plantilla se usa para los correos automáticos de vencimientos documentales (SOAT, Tecnomecánica, pólizas y otros).
+        </Typography>
+
+        {cargando ? (
+          <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
+            <CircularProgress />
+          </Box>
+        ) : (
+          <Stack spacing={2}>
+            {error && <Alert severity="error">{error}</Alert>}
+            {exito && <Alert severity="success">Plantilla guardada correctamente.</Alert>}
+
+            <Alert severity="info" sx={{ fontSize: '0.8rem' }}>
+              Haz clic en cualquier variable para insertarla al final del cuerpo.
+            </Alert>
+
+            <Box>
+              <Typography
+                variant="caption"
+                fontWeight={700}
+                color="text.secondary"
+                sx={{ textTransform: 'uppercase', letterSpacing: '0.06em', fontSize: '0.65rem', display: 'block', mb: 0.75 }}
+              >
+                Variables disponibles
+              </Typography>
+              <Stack direction="row" flexWrap="wrap" gap={0.75}>
+                {VARIABLES_PLANTILLA_ALERTA.map((v) => (
+                  <Tooltip key={v.clave} title={v.descripcion} placement="top">
+                    <Chip
+                      label={v.clave}
+                      size="small"
+                      variant="outlined"
+                      onClick={() => setCuerpo((prev) => `${prev}${prev.endsWith(' ') || prev.length === 0 ? '' : ' '}${v.clave}`)}
+                      sx={{ fontFamily: 'monospace', fontSize: '0.72rem', cursor: 'pointer' }}
+                    />
+                  </Tooltip>
+                ))}
+              </Stack>
+            </Box>
+
+            <Divider />
+
+            <TextField
+              label="Asunto (plantilla)"
+              fullWidth
+              size="small"
+              value={asunto}
+              onChange={(e) => setAsunto(e.target.value)}
+            />
+
+            <TextField
+              label="Cuerpo del correo (plantilla)"
+              fullWidth
+              multiline
+              minRows={9}
+              maxRows={16}
+              size="small"
+              value={cuerpo}
+              onChange={(e) => setCuerpo(e.target.value)}
+              sx={{ '& .MuiInputBase-input': { fontFamily: 'inherit', fontSize: '0.85rem', lineHeight: 1.7 } }}
+            />
+          </Stack>
+        )}
+      </DialogContent>
+      <DialogActions sx={{ px: 3, pb: 2 }}>
+        <Button onClick={onCerrar} disabled={guardando}>Cancelar</Button>
+        <Button variant="contained" onClick={guardar} disabled={guardando || cargando}>
+          {guardando ? 'Guardando…' : 'Guardar plantilla'}
+        </Button>
+      </DialogActions>
+    </Dialog>
   );
 }
 
