@@ -198,7 +198,7 @@ export default function ProgramacionDetallePage() {
                 <Box component="table" sx={{ width: '100%', borderCollapse: 'collapse', minWidth: 950 }}>
                   <Box component="thead">
                     <Box component="tr" sx={{ bgcolor: '#1A1A2E' }}>
-                      {['ESTADO', 'VEHÍCULO', 'CONDUCTOR', 'DEPENDENCIA', 'DESTINO', 'HORA DE SERVICIO Y PUNTO', 'HORA DE FINALIZACIÓN', 'ACTIVIDAD'].map((h) => (
+                      {['ESTADO', 'VEHÍCULO', 'CONDUCTOR', 'DEPENDENCIA', 'DESTINO', 'HORA DE SERVICIO Y PUNTO', 'HORA DE FINALIZACIÓN', 'ACTIVIDAD', 'MOTIVO'].map((h) => (
                         <Box component="th" key={h} sx={{ p: 1.25, color: '#fff', fontWeight: 700, fontSize: '0.72rem', textAlign: 'center', letterSpacing: '0.06em', border: '1px solid #333' }}>
                           {h}
                         </Box>
@@ -208,7 +208,7 @@ export default function ProgramacionDetallePage() {
                   <Box component="tbody">
                     {(prog.items || []).length === 0 ? (
                       <Box component="tr">
-                        <Box component="td" sx={{ p: 3, textAlign: 'center', color: 'text.secondary', border: '1px solid #E0E0E0' }} colSpan={8}>
+                        <Box component="td" sx={{ p: 3, textAlign: 'center', color: 'text.secondary', border: '1px solid #E0E0E0' }} colSpan={9}>
                           Esta programación todavía no tiene filas registradas.
                         </Box>
                       </Box>
@@ -223,7 +223,7 @@ export default function ProgramacionDetallePage() {
                             <Box component="span" sx={{ color: 'text.disabled', fontWeight: 600 }}>Sin marcar</Box>
                           )}
                         </Box>
-                        {[item.vehiculo_placa || '—', item.conductor, item.dependencia, item.destino, item.hora_salida_punto, item.hora_finalizacion, item.actividad].map((val, ci) => (
+                        {[item.vehiculo_placa || '—', item.conductor, item.dependencia, item.destino, item.hora_salida_punto, item.hora_finalizacion, item.actividad, item.motivo || '—'].map((val, ci) => (
                           <Box component="td" key={ci} sx={{ p: 1, fontSize: '0.8rem', border: '1px solid #E0E0E0', textAlign: ci === 0 ? 'center' : 'left', fontWeight: item.es_vacaciones ? 700 : 400 }}>
                             {val}
                           </Box>
@@ -279,14 +279,15 @@ function PrintView({ prog }: { prog: Programacion }) {
       <table style={{ width: '100%', borderCollapse: 'collapse', border: '2px solid #000' }}>
         <thead>
           <tr style={{ backgroundColor: '#D9D9D9' }}>
-            <th style={{ ...thStyle, width: '13%' }}>FECHA</th>
+            <th style={{ ...thStyle, width: '11%' }}>FECHA</th>
             <th style={thStyle}>VEHÍCULO</th>
             <th style={thStyle}>CONDUCTOR</th>
             <th style={thStyle}>DEPENDENCIA</th>
             <th style={thStyle}>DESTINO</th>
-            <th style={{ ...thStyle, width: '15%' }}>HORA DE SERVICIO Y PUNTO</th>
-            <th style={{ ...thStyle, width: '15%' }}>HORA DE FINALIZACIÓN</th>
+            <th style={{ ...thStyle, width: '13%' }}>HORA DE SERVICIO Y PUNTO</th>
+            <th style={{ ...thStyle, width: '13%' }}>HORA DE FINALIZACIÓN</th>
             <th style={thStyle}>ACTIVIDAD</th>
+            <th style={{ ...thStyle, width: '14%' }}>MOTIVO</th>
           </tr>
         </thead>
         <tbody>
@@ -306,7 +307,7 @@ function PrintView({ prog }: { prog: Programacion }) {
                   borde — visualmente casi idéntico al diseño original, pero
                   garantizando que el texto se capture correctamente.
                 */}
-                <td style={{ ...tdStyle, textAlign: 'center', fontWeight: 'bold', verticalAlign: 'middle', width: '13%', backgroundColor: '#fff', whiteSpace: 'nowrap' }}>
+                <td style={{ ...tdStyle, textAlign: 'center', fontWeight: 'bold', verticalAlign: 'middle', width: '11%', backgroundColor: '#fff', whiteSpace: 'nowrap' }}>
                   {i === 0 && fechaDosLineas.map((linea, wi) => <div key={wi}>{linea}</div>)}
                 </td>
                 <td style={{ ...tdStyle, textAlign: 'center', fontWeight: 600 }}>{item.vehiculo_placa || ''}</td>
@@ -316,6 +317,7 @@ function PrintView({ prog }: { prog: Programacion }) {
                 <td style={{ ...tdStyle, fontWeight: item.es_vacaciones ? 700 : 400 }}>{item.hora_salida_punto}</td>
                 <td style={{ ...tdStyle, fontWeight: item.es_vacaciones ? 700 : 400 }}>{item.hora_finalizacion}</td>
                 <td style={{ ...tdStyle, fontWeight: item.es_vacaciones ? 700 : 400 }}>{item.actividad}</td>
+                <td style={{ ...tdStyle, fontWeight: item.es_vacaciones ? 700 : 400 }}>{item.motivo || '—'}</td>
               </tr>
             );
           })}

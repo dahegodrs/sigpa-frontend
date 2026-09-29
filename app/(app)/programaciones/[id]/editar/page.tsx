@@ -237,16 +237,16 @@ export default function EditarProgramacionPage() {
           <Button size="small" startIcon={<AddIcon />} variant="outlined" onClick={agregarFila}>Agregar fila</Button>
         </Box>
         <Box sx={{ overflowX: 'auto' }}>
-          <Box sx={{ minWidth: 1330 }}>
-            <Box sx={{ display: 'grid', gridTemplateColumns: '52px 130px 110px 1fr 1fr 1fr 1fr 1fr 1fr 150px', gap: 0.5, px: 1.5, py: 1, bgcolor: '#FAFAFA', borderBottom: '2px solid', borderColor: 'divider' }}>
-              {['', 'VEHÍCULO', 'TIPO', 'CONDUCTOR', 'DEPENDENCIA', 'DESTINO', 'HORA DE SERVICIO Y PUNTO', 'HORA DE FINALIZACIÓN', 'ACTIVIDAD', 'ACCIONES'].map((h, i) => (
+          <Box sx={{ minWidth: 1450 }}>
+            <Box sx={{ display: 'grid', gridTemplateColumns: '52px 130px 110px 1fr 1fr 1fr 1fr 1fr 1fr 1fr 150px', gap: 0.5, px: 1.5, py: 1, bgcolor: '#FAFAFA', borderBottom: '2px solid', borderColor: 'divider' }}>
+              {['', 'VEHÍCULO', 'TIPO', 'CONDUCTOR', 'DEPENDENCIA', 'DESTINO', 'HORA DE SERVICIO Y PUNTO', 'HORA DE FINALIZACIÓN', 'ACTIVIDAD', 'MOTIVO', 'ACCIONES'].map((h, i) => (
                 <Typography key={i} variant="caption" fontWeight={700} sx={{ textTransform: 'uppercase', letterSpacing: '0.06em', color: 'text.secondary', fontSize: '0.65rem', display: 'flex', alignItems: 'center' }}>{h}</Typography>
               ))}
             </Box>
             {filas.map((fila, idx) => {
               const bloqueada = !!fila.notificado_en;
               return (
-              <Box key={idx} sx={{ display: 'grid', gridTemplateColumns: '52px 130px 110px 1fr 1fr 1fr 1fr 1fr 1fr 150px', gap: 0.5, px: 1.5, py: 0.9, borderBottom: '1px solid', borderColor: 'divider', bgcolor: bloqueada ? '#F5F5F5' : fila.origen === 'solicitud' ? '#EAF2FF' : fila.es_vacaciones ? '#FFF8E1' : idx % 2 === 0 ? 'background.paper' : alpha(theme.palette.text.primary, 0.02), alignItems: 'center', opacity: bloqueada ? 0.85 : fila.programado ? 1 : 0.55 }}>
+              <Box key={idx} sx={{ display: 'grid', gridTemplateColumns: '52px 130px 110px 1fr 1fr 1fr 1fr 1fr 1fr 1fr 150px', gap: 0.5, px: 1.5, py: 0.9, borderBottom: '1px solid', borderColor: 'divider', bgcolor: bloqueada ? '#F5F5F5' : fila.origen === 'solicitud' ? '#EAF2FF' : fila.es_vacaciones ? '#FFF8E1' : idx % 2 === 0 ? 'background.paper' : alpha(theme.palette.text.primary, 0.02), alignItems: 'center', opacity: bloqueada ? 0.85 : fila.programado ? 1 : 0.55 }}>
                 <Stack direction="row" alignItems="center" spacing={0.25}>
                   <DragIndicatorIcon sx={{ color: 'text.disabled', fontSize: 16 }} />
                   {fila.origen === 'solicitud' && (
@@ -286,6 +286,23 @@ export default function EditarProgramacionPage() {
                   {fila.es_vacaciones && <MenuItem value="VACACIONES">VACACIONES</MenuItem>}
                   {actividades.map((a) => <MenuItem key={a.id} value={a.nombre}>{a.nombre}</MenuItem>)}
                 </TextField>
+
+                <Tooltip title={fila.motivo?.trim() || 'Sin motivo registrado'}>
+                  <Typography
+                    variant="caption"
+                    sx={{
+                      fontSize: 12,
+                      px: 0.5,
+                      color: fila.motivo?.trim() ? 'text.primary' : 'text.disabled',
+                      fontStyle: fila.motivo?.trim() ? 'normal' : 'italic',
+                      whiteSpace: 'nowrap',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                    }}
+                  >
+                    {fila.motivo?.trim() || '—'}
+                  </Typography>
+                </Tooltip>
 
                 {/* ── Columna de acciones: rediseñada en 2 grupos separados ── */}
                 <Stack direction="row" alignItems="center" spacing={0.5} sx={{ pl: 0.5 }}>
