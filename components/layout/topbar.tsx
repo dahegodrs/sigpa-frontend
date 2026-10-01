@@ -30,6 +30,7 @@ export default function Topbar({ titulo, mostrarBotonMenu, onAbrirMenu }: { titu
   const iniciales = usuario?.nombre
     ? usuario.nombre.split(' ').map((p) => p[0]).slice(0, 2).join('').toUpperCase()
     : '?';
+  const esSolicitante = (usuario?.rol_nombre || '').toLowerCase() === 'solicitante';
 
   const buscar = (e: KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter' && busqueda.trim()) {
@@ -67,30 +68,32 @@ export default function Topbar({ titulo, mostrarBotonMenu, onAbrirMenu }: { titu
         </Stack>
 
         {/* Centro: búsqueda */}
-        <Box
-          sx={{
-            display: { xs: 'none', md: 'flex' },
-            alignItems: 'center',
-            gap: 1,
-            bgcolor: alpha(theme.palette.text.primary, 0.05),
-            border: '1px solid',
-            borderColor: 'divider',
-            borderRadius: '24px',
-            px: 2,
-            py: 0.6,
-            width: 280,
-            transition: 'all 0.2s ease',
-            '&:focus-within': {
-              bgcolor: 'background.paper',
-              borderColor: 'primary.main',
-              boxShadow: `0 0 0 3px ${alpha(theme.palette.primary.main, 0.12)}`,
-              width: 320,
-            },
-          }}
-        >
-          <SearchIcon sx={{ color: 'text.disabled', fontSize: 18, flexShrink: 0 }} />
-          <InputBase placeholder="Buscar por placa…" value={busqueda} onChange={(e) => setBusqueda(e.target.value)} onKeyDown={buscar} sx={{ fontSize: 14, flex: 1, '& input': { p: 0 } }} />
-        </Box>
+        {!esSolicitante && (
+          <Box
+            sx={{
+              display: { xs: 'none', md: 'flex' },
+              alignItems: 'center',
+              gap: 1,
+              bgcolor: alpha(theme.palette.text.primary, 0.05),
+              border: '1px solid',
+              borderColor: 'divider',
+              borderRadius: '24px',
+              px: 2,
+              py: 0.6,
+              width: 280,
+              transition: 'all 0.2s ease',
+              '&:focus-within': {
+                bgcolor: 'background.paper',
+                borderColor: 'primary.main',
+                boxShadow: `0 0 0 3px ${alpha(theme.palette.primary.main, 0.12)}`,
+                width: 320,
+              },
+            }}
+          >
+            <SearchIcon sx={{ color: 'text.disabled', fontSize: 18, flexShrink: 0 }} />
+            <InputBase placeholder="Buscar por placa…" value={busqueda} onChange={(e) => setBusqueda(e.target.value)} onKeyDown={buscar} sx={{ fontSize: 14, flex: 1, '& input': { p: 0 } }} />
+          </Box>
+        )}
 
         {/* Derecha */}
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.25, flexShrink: 0 }}>
@@ -100,13 +103,15 @@ export default function Topbar({ titulo, mostrarBotonMenu, onAbrirMenu }: { titu
             </IconButton>
           </Tooltip>
 
-          <Tooltip title={alertasPendientes ? `${alertasPendientes} alertas sin leer` : 'Sin alertas sin leer'}>
-            <IconButton size="small" onClick={() => router.push('/alertas')} sx={{ color: 'text.secondary' }}>
-              <Badge badgeContent={alertasPendientes || 0} color="error" sx={{ '& .MuiBadge-badge': { fontSize: 10, height: 16, minWidth: 16, fontWeight: 700 } }}>
-                <NotificationsOutlinedIcon fontSize="small" />
-              </Badge>
-            </IconButton>
-          </Tooltip>
+          {!esSolicitante && (
+            <Tooltip title={alertasPendientes ? `${alertasPendientes} alertas sin leer` : 'Sin alertas sin leer'}>
+              <IconButton size="small" onClick={() => router.push('/alertas')} sx={{ color: 'text.secondary' }}>
+                <Badge badgeContent={alertasPendientes || 0} color="error" sx={{ '& .MuiBadge-badge': { fontSize: 10, height: 16, minWidth: 16, fontWeight: 700 } }}>
+                  <NotificationsOutlinedIcon fontSize="small" />
+                </Badge>
+              </IconButton>
+            </Tooltip>
+          )}
 
           <Divider orientation="vertical" flexItem sx={{ mx: 0.5, height: 24, alignSelf: 'center' }} />
 
