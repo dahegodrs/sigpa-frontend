@@ -17,6 +17,10 @@ import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import AssignmentIndOutlinedIcon from '@mui/icons-material/AssignmentIndOutlined';
 import ThumbUpOutlinedIcon from '@mui/icons-material/ThumbUpOutlined';
 import ThumbDownOutlinedIcon from '@mui/icons-material/ThumbDownOutlined';
+import CheckCircleOutlineOutlinedIcon from '@mui/icons-material/CheckCircleOutlineOutlined';
+import CancelOutlinedIcon from '@mui/icons-material/CancelOutlined';
+import HourglassEmptyOutlinedIcon from '@mui/icons-material/HourglassEmptyOutlined';
+import MarkEmailReadOutlinedIcon from '@mui/icons-material/MarkEmailReadOutlined';
 import AppShell from '@/components/layout/app-shell';
 import { programacionesService, listasService, vehiculosService, dependenciasService, solicitudesVehiculoService } from '@/lib/services';
 import { ApiError } from '@/lib/api-client';
@@ -221,15 +225,15 @@ export default function EditarProgramacionPage() {
         </Box>
         <Box sx={{ overflowX: 'auto' }}>
           <Box sx={{ minWidth: 1450 }}>
-            <Box sx={{ display: 'grid', gridTemplateColumns: '52px 130px 110px 1fr 1fr 1fr 1fr 1fr 1fr 160px 1fr 150px', gap: 0.5, px: 1.5, py: 1, bgcolor: '#FAFAFA', borderBottom: '2px solid', borderColor: 'divider' }}>
-              {['', 'VEHÍCULO', 'TIPO', 'CONDUCTOR', 'DEPENDENCIA', 'DESTINO', 'HORA DE SERVICIO Y PUNTO', 'HORA DE FINALIZACIÓN', 'ACTIVIDAD', 'ESTADO SOLICITUD', 'MOTIVO', 'ACCIONES'].map((h, i) => (
+            <Box sx={{ display: 'grid', gridTemplateColumns: '52px 130px 110px 1fr 1fr 1fr 1fr 1fr 1fr 1fr 170px 150px', gap: 0.5, px: 1.5, py: 1, bgcolor: '#FAFAFA', borderBottom: '2px solid', borderColor: 'divider' }}>
+              {['', 'VEHÍCULO', 'TIPO', 'CONDUCTOR', 'DEPENDENCIA', 'DESTINO', 'HORA DE SERVICIO Y PUNTO', 'HORA DE FINALIZACIÓN', 'ACTIVIDAD', 'MOTIVO', 'ESTADO SOLICITUD', 'ACCIONES'].map((h, i) => (
                 <Typography key={i} variant="caption" fontWeight={700} sx={{ textTransform: 'uppercase', letterSpacing: '0.06em', color: 'text.secondary', fontSize: '0.65rem', display: 'flex', alignItems: 'center' }}>{h}</Typography>
               ))}
             </Box>
             {filas.map((fila, idx) => {
               const notificada = !!fila.notificado_en;
               return (
-              <Box key={idx} sx={{ display: 'grid', gridTemplateColumns: '52px 130px 110px 1fr 1fr 1fr 1fr 1fr 1fr 160px 1fr 150px', gap: 0.5, px: 1.5, py: 0.9, borderBottom: '1px solid', borderColor: 'divider', bgcolor: notificada ? '#ECFDF5' : fila.origen === 'solicitud' ? '#EAF2FF' : fila.es_vacaciones ? '#FFF8E1' : idx % 2 === 0 ? 'background.paper' : alpha(theme.palette.text.primary, 0.02), alignItems: 'center', opacity: fila.programado ? 1 : 0.55 }}>
+              <Box key={idx} sx={{ display: 'grid', gridTemplateColumns: '52px 130px 110px 1fr 1fr 1fr 1fr 1fr 1fr 1fr 170px 150px', gap: 0.5, px: 1.5, py: 0.9, borderBottom: '1px solid', borderColor: 'divider', bgcolor: notificada ? '#ECFDF5' : fila.origen === 'solicitud' ? '#EAF2FF' : fila.es_vacaciones ? '#FFF8E1' : idx % 2 === 0 ? 'background.paper' : alpha(theme.palette.text.primary, 0.02), alignItems: 'center', opacity: fila.programado ? 1 : 0.55 }}>
                 <Stack direction="row" alignItems="center" spacing={0.25}>
                   <DragIndicatorIcon sx={{ color: 'text.disabled', fontSize: 16 }} />
                   {fila.origen === 'solicitud' && (
@@ -270,38 +274,6 @@ export default function EditarProgramacionPage() {
                   {actividades.map((a) => <MenuItem key={a.id} value={a.nombre}>{a.nombre}</MenuItem>)}
                 </TextField>
 
-                {fila.origen === 'solicitud' ? (
-                  fila.estado_solicitud === 'pendiente' ? (
-                    <Chip
-                      label="Pendiente"
-                      size="small"
-                      sx={{ bgcolor: '#E5E7EB', color: '#374151', fontWeight: 600, fontSize: '0.68rem', height: 24, width: 'fit-content' }}
-                    />
-                  ) : fila.estado_solicitud === 'aprobada' ? (
-                    <Tooltip title={fila.notificado_en ? `Aprobada y notificada el ${new Date(fila.notificado_en).toLocaleString('es-CO')}` : 'Aprobada pendiente de notificación por correo'}>
-                      <Chip
-                        icon={<ThumbUpOutlinedIcon sx={{ fontSize: 14 }} />}
-                        label={fila.notificado_en ? 'Aprobada • Notificada' : 'Aprobada'}
-                        size="small"
-                        sx={{ bgcolor: fila.notificado_en ? '#A7F3D0' : '#DCFCE7', color: '#166534', fontWeight: 600, fontSize: '0.68rem', height: 24, width: 'fit-content' }}
-                      />
-                    </Tooltip>
-                  ) : (
-                    <Tooltip title={fila.motivo_rechazo || ''}>
-                      <Chip
-                        icon={<ThumbDownOutlinedIcon sx={{ fontSize: 14 }} />}
-                        label="Rechazada"
-                        size="small"
-                        sx={{ bgcolor: '#FEE2E2', color: '#991B1B', fontWeight: 600, fontSize: '0.68rem', height: 24, width: 'fit-content' }}
-                      />
-                    </Tooltip>
-                  )
-                ) : (
-                  <Typography variant="caption" sx={{ color: 'text.disabled', fontStyle: 'italic', fontSize: 11 }}>
-                    No aplica
-                  </Typography>
-                )}
-
                 <Tooltip title={fila.motivo?.trim() || 'Sin motivo registrado'}>
                   <Typography
                     variant="caption"
@@ -319,6 +291,49 @@ export default function EditarProgramacionPage() {
                   </Typography>
                 </Tooltip>
 
+                {fila.origen === 'solicitud' ? (
+                  fila.estado_solicitud === 'pendiente' ? (
+                    <Chip
+                      icon={<HourglassEmptyOutlinedIcon sx={{ fontSize: 14 }} />}
+                      label="Pendiente"
+                      size="small"
+                      sx={{ bgcolor: '#FEF3C7', color: '#92400E', fontWeight: 600, fontSize: '0.68rem', height: 24, width: 'fit-content' }}
+                    />
+                  ) : fila.estado_solicitud === 'aprobada' ? (
+                    <Tooltip title={fila.notificado_en ? `Aprobada y notificada el ${new Date(fila.notificado_en).toLocaleString('es-CO')}` : 'Aprobada pendiente de notificación por correo'}>
+                      <Stack direction="row" spacing={0.5} alignItems="center">
+                        <Chip
+                          icon={<CheckCircleOutlineOutlinedIcon sx={{ fontSize: 14 }} />}
+                          label="Aprobada"
+                          size="small"
+                          sx={{ bgcolor: '#DCFCE7', color: '#166534', fontWeight: 600, fontSize: '0.68rem', height: 24, width: 'fit-content' }}
+                        />
+                        {fila.notificado_en && (
+                          <Chip
+                            icon={<MarkEmailReadOutlinedIcon sx={{ fontSize: 14 }} />}
+                            label="Notificada"
+                            size="small"
+                            sx={{ bgcolor: '#DBEAFE', color: '#1E3A8A', fontWeight: 600, fontSize: '0.68rem', height: 24, width: 'fit-content' }}
+                          />
+                        )}
+                      </Stack>
+                    </Tooltip>
+                  ) : (
+                    <Tooltip title={fila.motivo_rechazo || ''}>
+                      <Chip
+                        icon={<CancelOutlinedIcon sx={{ fontSize: 14 }} />}
+                        label="Rechazada"
+                        size="small"
+                        sx={{ bgcolor: '#FEE2E2', color: '#991B1B', fontWeight: 600, fontSize: '0.68rem', height: 24, width: 'fit-content' }}
+                      />
+                    </Tooltip>
+                  )
+                ) : (
+                  <Typography variant="caption" sx={{ color: 'text.disabled', fontStyle: 'italic', fontSize: 11 }}>
+                    No aplica
+                  </Typography>
+                )}
+
                 {/* ── Columna de acciones: rediseñada en 2 grupos separados ── */}
                 <Stack direction="row" alignItems="center" spacing={0.5} sx={{ pl: 0.5 }}>
                   {fila.origen === 'solicitud' && fila.estado_solicitud === 'pendiente' ? (
@@ -334,13 +349,11 @@ export default function EditarProgramacionPage() {
                         </IconButton>
                       </Tooltip>
                     </Box>
-                  ) : fila.origen === 'solicitud' && fila.estado_solicitud === 'aprobada' ? (
-                    <Tooltip title={fila.notificado_en ? `Aprobada y notificada el ${new Date(fila.notificado_en).toLocaleString('es-CO')}` : 'Aprobada pendiente de notificación por correo'}>
-                      <Chip icon={<ThumbUpOutlinedIcon sx={{ fontSize: 14 }} />} label={fila.notificado_en ? 'Aprobada • Notificada' : 'Aprobada'} size="small" sx={{ bgcolor: fila.notificado_en ? '#A7F3D0' : '#DCFCE7', color: '#166534', fontWeight: 600, fontSize: '0.68rem', height: 24 }} />
-                    </Tooltip>
-                  ) : fila.origen === 'solicitud' && fila.estado_solicitud === 'rechazada' ? (
-                    <Tooltip title={fila.motivo_rechazo || ''}>
-                      <Chip icon={<ThumbDownOutlinedIcon sx={{ fontSize: 14 }} />} label="Rechazada" size="small" sx={{ bgcolor: '#FEE2E2', color: '#991B1B', fontWeight: 600, fontSize: '0.68rem', height: 24 }} />
+                  ) : fila.origen === 'solicitud' ? (
+                    <Tooltip title="Solicitud ya decidida. Usa esta columna para vacaciones y eliminación de fila.">
+                      <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 600, fontSize: 11 }}>
+                        Decidida
+                      </Typography>
                     </Tooltip>
                   ) : (
                     <Tooltip title={fila.programado ? 'Fila incluida en la planilla final' : 'Fila NO se incluirá en la planilla final'}>
