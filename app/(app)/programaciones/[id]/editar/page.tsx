@@ -17,8 +17,6 @@ import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import AssignmentIndOutlinedIcon from '@mui/icons-material/AssignmentIndOutlined';
 import ThumbUpOutlinedIcon from '@mui/icons-material/ThumbUpOutlined';
 import ThumbDownOutlinedIcon from '@mui/icons-material/ThumbDownOutlined';
-import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
-import LockOpenOutlinedIcon from '@mui/icons-material/LockOpenOutlined';
 import AppShell from '@/components/layout/app-shell';
 import { programacionesService, listasService, vehiculosService, dependenciasService, solicitudesVehiculoService } from '@/lib/services';
 import { ApiError } from '@/lib/api-client';
@@ -174,25 +172,6 @@ export default function EditarProgramacionPage() {
     }
   };
 
-  // Una fila con "notificado_en" ya le fue confirmada por correo al
-  // solicitante — queda bloqueada para no perder trazabilidad (si el
-  // director la modifica sin avisar, el solicitante quedaría con
-  // información desactualizada). Debe desbloquearla explícitamente si
-  // necesita corregir algo (ej. el vehículo se dañó).
-  const desbloquearFila = async (idx: number) => {
-    const fila = filas[idx];
-    if (!fila.id) return;
-    setProcesandoDecision(true);
-    try {
-      await solicitudesVehiculoService.desbloquear(fila.id);
-      setFilas((prev) => prev.map((f, i) => i === idx ? { ...f, notificado_en: null } : f));
-    } catch (err) {
-      setError(err instanceof ApiError ? err.message : 'No se pudo desbloquear la fila');
-    } finally {
-      setProcesandoDecision(false);
-    }
-  };
-
   const guardar = async () => {
     if (!fecha) { setError('La fecha es obligatoria'); return; }
     setGuardando(true); setError(null);
@@ -206,7 +185,11 @@ export default function EditarProgramacionPage() {
         // de vehículo que van llegando durante el día). Las filas ya
         // notificadas se conservan intactas en el backend aunque se
         // envíen modificadas desde aquí.
-        items: filas.map((f, i) => ({ ...f, orden: i })),
+        items: filas.map((f, i) => ({
+          ...f,
+          programado: f.estado_solicitud === 'aprobada' ? true : f.programado,
+          orden: i,
+        })),
       });
       router.push(`/programaciones/${id}`);
     } catch (err) {
@@ -244,9 +227,9 @@ export default function EditarProgramacionPage() {
               ))}
             </Box>
             {filas.map((fila, idx) => {
-              const bloqueada = !!fila.notificado_en;
+              const notificada = !!fila.notificado_en;
               return (
-              <Box key={idx} sx={{ display: 'grid', gridTemplateColumns: '52px 130px 110px 1fr 1fr 1fr 1fr 1fr 1fr 1fr 150px', gap: 0.5, px: 1.5, py: 0.9, borderBottom: '1px solid', borderColor: 'divider', bgcolor: bloqueada ? '#F5F5F5' : fila.origen === 'solicitud' ? '#EAF2FF' : fila.es_vacaciones ? '#FFF8E1' : idx % 2 === 0 ? 'background.paper' : alpha(theme.palette.text.primary, 0.02), alignItems: 'center', opacity: bloqueada ? 0.85 : fila.programado ? 1 : 0.55 }}>
+              <Box key={idx} sx={{ display: 'grid', gridTemplateColumns: '52px 130px 110px 1fr 1fr 1fr 1fr 1fr 1fr 1fr 150px', gap: 0.5, px: 1.5, py: 0.9, borderBottom: '1px solid', borderColor: 'divider', bgcolor: notificada ? '#ECFDF5' : fila.origen === 'solicitud' ? '#EAF2FF' : fila.es_vacaciones ? '#FFF8E1' : idx % 2 === 0 ? 'background.paper' : alpha(theme.palette.text.primary, 0.02), alignItems: 'center', opacity: fila.programado ? 1 : 0.55 }}>
                 <Stack direction="row" alignItems="center" spacing={0.25}>
                   <DragIndicatorIcon sx={{ color: 'text.disabled', fontSize: 16 }} />
                   {fila.origen === 'solicitud' && (
@@ -262,7 +245,7 @@ export default function EditarProgramacionPage() {
                     </Tooltip>
                   )}
                 </Stack>
-                <TextField select size="small" value={fila.vehiculo_id ?? ''} onChange={(e) => actualizarFila(idx, 'vehiculo_id', e.target.value ? Number(e.target.value) : null)} disabled={fila.es_vacaciones || bloqueada} sx={{ '& .MuiInputBase-root': { fontSize: 12 } }}>
+                <TextField select size="small" value={fila.vehiculo_id ?? ''} onChange={(e) => actualizarFila(idx, 'vehiculo_id', e.target.value ? Number(e.target.value) : null)} disabled={fila.es_vacaciones} sx={{ '& .MuiInputBase-root': { fontSize: 12 } }}>
                   <MenuItem value=""><em>Sin vehículo</em></MenuItem>
                   {vehiculos.map((v) => <MenuItem key={v.id} value={v.id}>{v.placa}</MenuItem>)}
                 </TextField>
@@ -271,18 +254,18 @@ export default function EditarProgramacionPage() {
                     {tipoVehiculoParaFila(fila, vehiculos)}
                   </Typography>
                 </Tooltip>
-                <TextField select size="small" value={fila.conductor} onChange={(e) => actualizarFila(idx, 'conductor', e.target.value)} disabled={bloqueada} sx={{ '& .MuiInputBase-root': { fontSize: 12 } }}>
+                <TextField select size="small" value={fila.conductor} onChange={(e) => actualizarFila(idx, 'conductor', e.target.value)} sx={{ '& .MuiInputBase-root': { fontSize: 12 } }}>
                   {conductores.map((c) => <MenuItem key={c.id} value={c.nombre}>{c.nombre}</MenuItem>)}
                 </TextField>
-                <TextField select size="small" value={fila.dependencia} onChange={(e) => actualizarFila(idx, 'dependencia', e.target.value)} disabled={fila.es_vacaciones || bloqueada} sx={{ '& .MuiInputBase-root': { fontSize: 12 } }}>
+                <TextField select size="small" value={fila.dependencia} onChange={(e) => actualizarFila(idx, 'dependencia', e.target.value)} disabled={fila.es_vacaciones} sx={{ '& .MuiInputBase-root': { fontSize: 12 } }}>
                   <MenuItem value="DISPONIBLE PATIO">DISPONIBLE PATIO</MenuItem>
                   {fila.es_vacaciones && <MenuItem value="VACACIONES">VACACIONES</MenuItem>}
                   {dependencias.map((d) => <MenuItem key={d.id} value={d.nombre}>{d.nombre}</MenuItem>)}
                 </TextField>
-                <TextField size="small" value={fila.destino} onChange={(e) => actualizarFila(idx, 'destino', e.target.value)} disabled={fila.es_vacaciones || bloqueada} inputProps={{ style: { fontSize: 12 } }} />
-                <TextField size="small" value={fila.hora_salida_punto} onChange={(e) => actualizarFila(idx, 'hora_salida_punto', e.target.value)} disabled={fila.es_vacaciones || bloqueada} inputProps={{ style: { fontSize: 12 } }} />
-                <TextField size="small" value={fila.hora_finalizacion} onChange={(e) => actualizarFila(idx, 'hora_finalizacion', e.target.value)} disabled={fila.es_vacaciones || bloqueada} inputProps={{ style: { fontSize: 12 } }} />
-                <TextField select size="small" value={fila.actividad} onChange={(e) => actualizarFila(idx, 'actividad', e.target.value)} disabled={fila.es_vacaciones || bloqueada} sx={{ '& .MuiInputBase-root': { fontSize: 12 } }}>
+                <TextField size="small" value={fila.destino} onChange={(e) => actualizarFila(idx, 'destino', e.target.value)} disabled={fila.es_vacaciones} inputProps={{ style: { fontSize: 12 } }} />
+                <TextField size="small" value={fila.hora_salida_punto} onChange={(e) => actualizarFila(idx, 'hora_salida_punto', e.target.value)} disabled={fila.es_vacaciones} inputProps={{ style: { fontSize: 12 } }} />
+                <TextField size="small" value={fila.hora_finalizacion} onChange={(e) => actualizarFila(idx, 'hora_finalizacion', e.target.value)} disabled={fila.es_vacaciones} inputProps={{ style: { fontSize: 12 } }} />
+                <TextField select size="small" value={fila.actividad} onChange={(e) => actualizarFila(idx, 'actividad', e.target.value)} disabled={fila.es_vacaciones} sx={{ '& .MuiInputBase-root': { fontSize: 12 } }}>
                   {fila.es_vacaciones && <MenuItem value="VACACIONES">VACACIONES</MenuItem>}
                   {actividades.map((a) => <MenuItem key={a.id} value={a.nombre}>{a.nombre}</MenuItem>)}
                 </TextField>
@@ -306,16 +289,7 @@ export default function EditarProgramacionPage() {
 
                 {/* ── Columna de acciones: rediseñada en 2 grupos separados ── */}
                 <Stack direction="row" alignItems="center" spacing={0.5} sx={{ pl: 0.5 }}>
-                  {bloqueada ? (
-                    <Tooltip title={`Ya se notificó al solicitante el ${new Date(fila.notificado_en!).toLocaleString('es-CO')} — bloqueada para conservar trazabilidad`}>
-                      <Chip
-                        icon={<LockOutlinedIcon sx={{ fontSize: 14 }} />}
-                        label="Notificado"
-                        size="small"
-                        sx={{ bgcolor: '#E5E7EB', color: '#374151', fontWeight: 600, fontSize: '0.68rem', height: 24 }}
-                      />
-                    </Tooltip>
-                  ) : fila.origen === 'solicitud' && fila.estado_solicitud === 'pendiente' ? (
+                  {fila.origen === 'solicitud' && fila.estado_solicitud === 'pendiente' ? (
                     <Box sx={{ display: 'flex', bgcolor: '#F3F4F6', borderRadius: 1.5, p: 0.25 }}>
                       <Tooltip title="Aprobar (usa el vehículo/conductor configurados en esta fila)">
                         <IconButton size="small" onClick={() => aprobarSolicitud(idx)} disabled={procesandoDecision} sx={{ color: '#16A34A', p: 0.5 }}>
@@ -329,7 +303,9 @@ export default function EditarProgramacionPage() {
                       </Tooltip>
                     </Box>
                   ) : fila.origen === 'solicitud' && fila.estado_solicitud === 'aprobada' ? (
-                    <Chip icon={<ThumbUpOutlinedIcon sx={{ fontSize: 14 }} />} label="Aprobada" size="small" sx={{ bgcolor: '#DCFCE7', color: '#166534', fontWeight: 600, fontSize: '0.68rem', height: 24 }} />
+                    <Tooltip title={fila.notificado_en ? `Aprobada y notificada el ${new Date(fila.notificado_en).toLocaleString('es-CO')}` : 'Aprobada pendiente de notificación por correo'}>
+                      <Chip icon={<ThumbUpOutlinedIcon sx={{ fontSize: 14 }} />} label={fila.notificado_en ? 'Aprobada • Notificada' : 'Aprobada'} size="small" sx={{ bgcolor: fila.notificado_en ? '#A7F3D0' : '#DCFCE7', color: '#166534', fontWeight: 600, fontSize: '0.68rem', height: 24 }} />
+                    </Tooltip>
                   ) : fila.origen === 'solicitud' && fila.estado_solicitud === 'rechazada' ? (
                     <Tooltip title={fila.motivo_rechazo || ''}>
                       <Chip icon={<ThumbDownOutlinedIcon sx={{ fontSize: 14 }} />} label="Rechazada" size="small" sx={{ bgcolor: '#FEE2E2', color: '#991B1B', fontWeight: 600, fontSize: '0.68rem', height: 24 }} />
@@ -349,18 +325,10 @@ export default function EditarProgramacionPage() {
 
                   <Box sx={{ width: '1px', height: 20, bgcolor: 'divider', mx: 0.25 }} />
 
-                  {bloqueada ? (
-                    <Tooltip title="Desbloquear para corregir (el vehículo/conductor cambiará y el solicitante NO será renotificado automáticamente salvo que vuelvas a aprobar/rechazar)">
-                      <IconButton size="small" onClick={() => desbloquearFila(idx)} disabled={procesandoDecision} sx={{ color: '#F59E0B', p: 0.5 }}>
-                        <LockOpenOutlinedIcon sx={{ fontSize: 16 }} />
-                      </IconButton>
-                    </Tooltip>
-                  ) : (
-                    <Tooltip title={fila.es_vacaciones ? 'Quitar vacaciones' : 'Marcar vacaciones'}>
-                      <Checkbox checked={fila.es_vacaciones} onChange={(e) => marcarVacaciones(idx, e.target.checked)} size="small" sx={{ p: 0.5, color: '#F59E0B', '&.Mui-checked': { color: '#F59E0B' } }} />
-                    </Tooltip>
-                  )}
-                  <IconButton size="small" onClick={() => eliminarFila(idx)} disabled={filas.length === 1 || bloqueada} sx={{ color: 'error.main', p: 0.5 }}>
+                  <Tooltip title={fila.es_vacaciones ? 'Quitar vacaciones' : 'Marcar vacaciones'}>
+                    <Checkbox checked={fila.es_vacaciones} onChange={(e) => marcarVacaciones(idx, e.target.checked)} size="small" sx={{ p: 0.5, color: '#F59E0B', '&.Mui-checked': { color: '#F59E0B' } }} />
+                  </Tooltip>
+                  <IconButton size="small" onClick={() => eliminarFila(idx)} disabled={filas.length === 1} sx={{ color: 'error.main', p: 0.5 }}>
                     <DeleteOutlineIcon sx={{ fontSize: 17 }} />
                   </IconButton>
                 </Stack>
