@@ -143,6 +143,14 @@ export default function EditarProgramacionPage() {
   const aprobarSolicitud = async (idx: number) => {
     const fila = filas[idx];
     if (!fila.id) return;
+
+    const conductorValido = !!fila.conductor?.trim() && fila.conductor !== 'DISPONIBLE PATIO';
+    const vehiculoValido = !!fila.vehiculo_id;
+    if (!conductorValido || !vehiculoValido) {
+      setError('Para aprobar la solicitud debes seleccionar vehículo y conductor.');
+      return;
+    }
+
     setProcesandoDecision(true);
     setError(null);
     try {
@@ -233,7 +241,17 @@ export default function EditarProgramacionPage() {
             {filas.map((fila, idx) => {
               const notificada = !!fila.notificado_en;
               return (
-              <Box key={idx} sx={{ display: 'grid', gridTemplateColumns: '52px 130px 110px 1fr 1fr 1fr 1fr 1fr 1fr 1fr 170px 150px', gap: 0.5, px: 1.5, py: 0.9, borderBottom: '1px solid', borderColor: 'divider', bgcolor: notificada ? '#ECFDF5' : fila.origen === 'solicitud' ? '#EAF2FF' : fila.es_vacaciones ? '#FFF8E1' : idx % 2 === 0 ? 'background.paper' : alpha(theme.palette.text.primary, 0.02), alignItems: 'center', opacity: fila.programado ? 1 : 0.55 }}>
+              <Box key={idx} sx={{ display: 'grid', gridTemplateColumns: '52px 130px 110px 1fr 1fr 1fr 1fr 1fr 1fr 1fr 170px 150px', gap: 0.5, px: 1.5, py: 0.9, borderBottom: '1px solid', borderColor: 'divider', bgcolor: fila.origen === 'solicitud' && fila.estado_solicitud === 'pendiente'
+                ? '#FFF1F2'
+                : notificada
+                  ? '#ECFDF5'
+                  : fila.origen === 'solicitud'
+                    ? '#EAF2FF'
+                    : fila.es_vacaciones
+                      ? '#FFF8E1'
+                      : idx % 2 === 0
+                        ? 'background.paper'
+                        : alpha(theme.palette.text.primary, 0.02), alignItems: 'center', opacity: 1 }}>
                 <Stack direction="row" alignItems="center" spacing={0.25}>
                   <DragIndicatorIcon sx={{ color: 'text.disabled', fontSize: 16 }} />
                   {fila.origen === 'solicitud' && (
@@ -295,9 +313,9 @@ export default function EditarProgramacionPage() {
                   fila.estado_solicitud === 'pendiente' ? (
                     <Chip
                       icon={<HourglassEmptyOutlinedIcon sx={{ fontSize: 14 }} />}
-                      label="Pendiente"
+                      label="En espera de aprobación"
                       size="small"
-                      sx={{ bgcolor: '#FEF3C7', color: '#92400E', fontWeight: 600, fontSize: '0.68rem', height: 24, width: 'fit-content' }}
+                      sx={{ bgcolor: '#FFF7ED', color: '#C2410C', fontWeight: 600, fontSize: '0.68rem', height: 24, width: 'fit-content' }}
                     />
                   ) : fila.estado_solicitud === 'aprobada' ? (
                     <Tooltip title={fila.notificado_en ? `Aprobada y notificada el ${new Date(fila.notificado_en).toLocaleString('es-CO')}` : 'Aprobada pendiente de notificación por correo'}>
