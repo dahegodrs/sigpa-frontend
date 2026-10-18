@@ -276,8 +276,9 @@ export interface ProgramacionItem {
   // Opcional en el frontend porque las filas manuales creadas por el
   // director (sin pasar por el formulario de solicitud) no necesitan
   // establecerlo — el backend le asigna 'pendiente' por defecto.
-  estado_solicitud?: 'pendiente' | 'aprobada' | 'rechazada';
+  estado_solicitud?: 'pendiente' | 'aprobada' | 'rechazada' | 'cancelada';
   motivo_rechazo?: string | null;
+  cancelado_en?: string | null;
   notificado_en?: string | null;
 }
 

@@ -12,8 +12,10 @@ import EventNoteOutlinedIcon from '@mui/icons-material/EventNoteOutlined';
 import CheckIcon from '@mui/icons-material/Check';
 import CloseIcon from '@mui/icons-material/Close';
 import HourglassEmptyIcon from '@mui/icons-material/HourglassEmpty';
+import BlockIcon from '@mui/icons-material/Block';
 import AppShell from '@/components/layout/app-shell';
 import MonthNavigator from '@/components/ui/month-navigator';
+import ConfirmDialog from '@/components/ui/confirm-dialog';
 import { solicitudesVehiculoService } from '@/lib/services';
 import { ApiError } from '@/lib/api-client';
 import type { ProgramacionItem } from '@/types';
@@ -29,7 +31,20 @@ const FILTROS_ESTADO = [
   { valor: 'pendiente', label: 'Pendientes' },
   { valor: 'aprobada', label: 'Aprobadas' },
   { valor: 'rechazada', label: 'Rechazadas' },
+  { valor: 'cancelada', label: 'Canceladas' },
 ] as const;
+
+// Una solicitud solo se puede cancelar si todavía no fue decidida de
+// forma definitiva (rechazada/cancelada) y si la fecha del servicio no
+// ya pasó — coincide con la validación que hace el backend, así el botón
+// no aparece en casos que el servidor rechazaría de todas formas.
+function puedeCancelarse(item: ProgramacionItem): boolean {
+  const estado = item.estado_solicitud || 'pendiente';
+  if (estado === 'rechazada' || estado === 'cancelada') return false;
+  if (!item.fecha_programacion) return true;
+  const hoy = new Date().toISOString().slice(0, 10);
+  return item.fecha_programacion >= hoy;
+}
 
 // Timeline tipo "pasarela de pago": Solicitado (siempre completo) → En
 // espera de aprobación → Aprobada/Rechazada. Se implementa como 3 círculos
@@ -40,13 +55,21 @@ const FILTROS_ESTADO = [
 function TimelineSolicitud({ item }: { item: ProgramacionItem }) {
   const estado = item.estado_solicitud || 'pendiente';
 
+  const labelPaso2 =
+    estado === 'pendiente' ? 'En espera de aprobación' :
+    estado === 'aprobada' ? 'Aprobada' :
+    estado === 'cancelada' ? 'Cancelada por ti' :
+    'Rechazada';
+
+  const colorPaso2 =
+    estado === 'aprobada' ? '#16A34A' :
+    estado === 'rechazada' ? '#DA151C' :
+    estado === 'cancelada' ? '#666666' :
+    '#F59E0B';
+
   const pasos = [
-    { label: 'Solicitado', activo: true, color: '#2563EB' },
-    {
-      label: estado === 'pendiente' ? 'En espera de aprobación' : estado === 'aprobada' ? 'Aprobada' : 'Rechazada',
-      activo: estado !== 'pendiente' || true, // el paso 2 siempre está "vivo" (pendiente = en curso)
-      color: estado === 'aprobada' ? '#16A34A' : estado === 'rechazada' ? '#DA151C' : '#F59E0B',
-    },
+    { label: 'Solicitado', color: '#2563EB' },
+    { label: labelPaso2, color: colorPaso2 },
   ];
 
   return (
@@ -67,6 +90,8 @@ function TimelineSolicitud({ item }: { item: ProgramacionItem }) {
                 <CheckIcon sx={{ fontSize: 16, color: '#fff' }} />
               ) : estado === 'rechazada' ? (
                 <CloseIcon sx={{ fontSize: 16, color: '#fff' }} />
+              ) : estado === 'cancelada' ? (
+                <BlockIcon sx={{ fontSize: 14, color: '#fff' }} />
               ) : (
                 <HourglassEmptyIcon sx={{ fontSize: 14, color: '#fff' }} />
               )}
@@ -98,6 +123,11 @@ export default function MisSolicitudesPage() {
   const [page, setPage] = useState(0); // 0-indexed para TablePagination
   const [pageSize, setPageSize] = useState(10);
 
+  // Estado del diálogo de confirmación de cancelación.
+  const [itemACancelar, setItemACancelar] = useState<ProgramacionItem | null>(null);
+  const [cancelando, setCancelando] = useState(false);
+  const [errorCancelar, setErrorCancelar] = useState<string | null>(null);
+
   const cargar = useCallback(() => {
     setCargando(true);
     setError(null);
@@ -121,6 +151,19 @@ export default function MisSolicitudesPage() {
   // quedar en una página vacía si el nuevo filtro tiene menos resultados.
   const cambiarMes = (a: number, m: number) => { setAnio(a); setMes(m); setPage(0); };
   const cambiarEstado = (v: string) => { setEstadoFiltro(v); setPage(0); };
+
+  const confirmarCancelacion = () => {
+    if (!itemACancelar?.id) return;
+    setCancelando(true);
+    setErrorCancelar(null);
+    solicitudesVehiculoService.cancelar(itemACancelar.id)
+      .then(() => {
+        setItemACancelar(null);
+        cargar();
+      })
+      .catch((err) => setErrorCancelar(err instanceof ApiError ? err.message : 'No se pudo cancelar la solicitud'))
+      .finally(() => setCancelando(false));
+  };
 
   return (
     <AppShell titulo="Mis Solicitudes">
@@ -184,6 +227,7 @@ export default function MisSolicitudesPage() {
                     <TableCell>Actividad</TableCell>
                     <TableCell>Estado</TableCell>
                     <TableCell>Vehículo / Conductor</TableCell>
+                    <TableCell align="right">Acciones</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
@@ -219,6 +263,18 @@ export default function MisSolicitudesPage() {
                             <Typography variant="body2" color="text.disabled">Sin asignar todavía</Typography>
                           )}
                         </TableCell>
+                        <TableCell align="right">
+                          {puedeCancelarse(item) && (
+                            <Button
+                              size="small"
+                              color="error"
+                              variant="outlined"
+                              onClick={() => setItemACancelar(item)}
+                            >
+                              Cancelar
+                            </Button>
+                          )}
+                        </TableCell>
                       </TableRow>
                     );
                   })}
@@ -239,6 +295,26 @@ export default function MisSolicitudesPage() {
           </>
         )}
       </Paper>
+
+      <ConfirmDialog
+        abierto={!!itemACancelar}
+        titulo="Cancelar solicitud"
+        mensaje={
+          itemACancelar?.estado_solicitud === 'aprobada'
+            ? 'Esta solicitud ya fue aprobada (y posiblemente ya tenías vehículo y conductor asignados). Si la cancelas, el horario quedará disponible nuevamente para que el director lo reasigne. ¿Deseas continuar?'
+            : '¿Deseas cancelar esta solicitud de vehículo? Esta acción no se puede deshacer.'
+        }
+        textoConfirmar="Sí, cancelar"
+        textoCancelar="No, mantener"
+        cargando={cancelando}
+        onConfirmar={confirmarCancelacion}
+        onCancelar={() => { setItemACancelar(null); setErrorCancelar(null); }}
+      />
+      {errorCancelar && itemACancelar && (
+        <Alert severity="error" sx={{ mt: 2 }} onClose={() => setErrorCancelar(null)}>
+          {errorCancelar}
+        </Alert>
+      )}
     </AppShell>
   );
 }

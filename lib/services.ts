@@ -191,6 +191,9 @@ export const solicitudesVehiculoService = {
   aprobar: (itemId: number) => api.put(`/programaciones/items/${itemId}/aprobar`, {}),
   rechazar: (itemId: number, motivo: string) => api.put(`/programaciones/items/${itemId}/rechazar`, { motivo }),
   desbloquear: (itemId: number) => api.put(`/programaciones/items/${itemId}/desbloquear`, {}),
+  // Cancelar: acción exclusiva del propio Solicitante sobre su propia
+  // fila, distinta de "rechazar" (que es decisión del Administrador).
+  cancelar: (itemId: number) => api.put(`/solicitudes-vehiculo/${itemId}/cancelar`, {}),
 };
 
 export interface PlantillaSolicitud {

@@ -21,6 +21,7 @@ import CheckCircleOutlineOutlinedIcon from '@mui/icons-material/CheckCircleOutli
 import CancelOutlinedIcon from '@mui/icons-material/CancelOutlined';
 import HourglassEmptyOutlinedIcon from '@mui/icons-material/HourglassEmptyOutlined';
 import MarkEmailReadOutlinedIcon from '@mui/icons-material/MarkEmailReadOutlined';
+import BlockOutlinedIcon from '@mui/icons-material/BlockOutlined';
 import AppShell from '@/components/layout/app-shell';
 import { programacionesService, listasService, vehiculosService, dependenciasService, solicitudesVehiculoService } from '@/lib/services';
 import { ApiError } from '@/lib/api-client';
@@ -241,7 +242,9 @@ export default function EditarProgramacionPage() {
             {filas.map((fila, idx) => {
               const notificada = !!fila.notificado_en;
               return (
-              <Box key={idx} sx={{ display: 'grid', gridTemplateColumns: '52px 130px 110px 1fr 1fr 1fr 1fr 1fr 1fr 1fr 170px 150px', gap: 0.5, px: 1.5, py: 0.9, borderBottom: '1px solid', borderColor: 'divider', bgcolor: fila.origen === 'solicitud' && fila.estado_solicitud === 'pendiente'
+              <Box key={idx} sx={{ display: 'grid', gridTemplateColumns: '52px 130px 110px 1fr 1fr 1fr 1fr 1fr 1fr 1fr 170px 150px', gap: 0.5, px: 1.5, py: 0.9, borderBottom: '1px solid', borderColor: 'divider', bgcolor: fila.estado_solicitud === 'cancelada'
+                ? '#F3F4F6'
+                : fila.origen === 'solicitud' && fila.estado_solicitud === 'pendiente'
                 ? '#FFF1F2'
                 : notificada
                   ? '#ECFDF5'
@@ -251,7 +254,7 @@ export default function EditarProgramacionPage() {
                       ? '#FFF8E1'
                       : idx % 2 === 0
                         ? 'background.paper'
-                        : alpha(theme.palette.text.primary, 0.02), alignItems: 'center', opacity: 1 }}>
+                        : alpha(theme.palette.text.primary, 0.02), alignItems: 'center', opacity: fila.estado_solicitud === 'cancelada' ? 0.75 : 1 }}>
                 <Stack direction="row" alignItems="center" spacing={0.25}>
                   <DragIndicatorIcon sx={{ color: 'text.disabled', fontSize: 16 }} />
                   {fila.origen === 'solicitud' && (
@@ -310,7 +313,16 @@ export default function EditarProgramacionPage() {
                 </Tooltip>
 
                 {fila.origen === 'solicitud' ? (
-                  fila.estado_solicitud === 'pendiente' ? (
+                  fila.estado_solicitud === 'cancelada' ? (
+                    <Tooltip title={fila.cancelado_en ? `Cancelada por el solicitante el ${new Date(fila.cancelado_en).toLocaleString('es-CO')}` : 'Cancelada por el solicitante'}>
+                      <Chip
+                        icon={<BlockOutlinedIcon sx={{ fontSize: 14 }} />}
+                        label="Cancelada por el solicitante"
+                        size="small"
+                        sx={{ bgcolor: '#E5E7EB', color: '#374151', fontWeight: 600, fontSize: '0.68rem', height: 24, width: 'fit-content' }}
+                      />
+                    </Tooltip>
+                  ) : fila.estado_solicitud === 'pendiente' ? (
                     <Chip
                       icon={<HourglassEmptyOutlinedIcon sx={{ fontSize: 14 }} />}
                       label="En espera de aprobación"
@@ -367,6 +379,12 @@ export default function EditarProgramacionPage() {
                         </IconButton>
                       </Tooltip>
                     </Box>
+                  ) : fila.estado_solicitud === 'cancelada' ? (
+                    <Tooltip title="Esta fila fue cancelada por el propio solicitante. El horario ya quedó disponible.">
+                      <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 600, fontSize: 11 }}>
+                        Cancelada
+                      </Typography>
+                    </Tooltip>
                   ) : fila.origen === 'solicitud' ? (
                     <Tooltip title="Solicitud ya decidida. Usa esta columna para vacaciones y eliminación de fila.">
                       <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 600, fontSize: 11 }}>
