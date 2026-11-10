@@ -122,6 +122,9 @@ export interface Alerta {
   detalle_error?: string | null;
   leida: boolean;
   fecha_creacion: string;
+  descartada?: boolean;
+  descartada_por?: number | null;
+  fecha_descarte?: string | null;
   // Enriquecidos vía JOIN en el backend, para mostrar mensajes específicos
   // ("SOAT vencido hace 5 días") en vez de un genérico "Documento vencido".
   vehiculo_placa?: string;

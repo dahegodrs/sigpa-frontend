@@ -70,6 +70,7 @@ export const alertasService = {
 	ejecutarRevisionManual: () => api.post('/alertas/ejecutar-revision'),
 	marcarLeida: (id: number) => api.put(`/alertas/${id}/leida`),
 	marcarTodasLeidas: () => api.put('/alertas/marcar-todas-leidas'),
+	descartar: (id: number) => api.put(`/alertas/${id}/descartar`, {}),
 	listarConfig: () => api.get<ConfigAlerta[]>('/alertas/config'),
 	crearConfig: (data: { dias_antes: number; nivel: string }) => api.post<{ id: number }>('/alertas/config', data),
 	actualizarConfig: (id: number, data: { dias_antes: number; nivel: string; activo: boolean }) =>

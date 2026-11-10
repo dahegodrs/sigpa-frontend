@@ -123,6 +123,14 @@ export default function AlertasPage() {
     } catch (err) { setError(err instanceof ApiError ? err.message : 'No se pudo marcar'); }
   };
 
+  const descartar = async (id: number) => {
+    try {
+      await alertasService.descartar(id);
+      // Quitar la alerta de la lista local — ya está descartada en BD
+      setAlertas((prev) => prev.filter((a) => a.id !== id));
+    } catch (err) { setError(err instanceof ApiError ? err.message : 'No se pudo descartar la alerta'); }
+  };
+
   const marcarTodasLeidas = async () => {
     try {
       await alertasService.marcarTodasLeidas();
@@ -327,11 +335,24 @@ export default function AlertasPage() {
                   <Typography variant="body2" fontWeight={600} sx={{ opacity: a.leida ? 0.65 : 1 }}>{construirMensajeAlerta(a)}</Typography>
                   <Typography variant="caption" color="text.secondary">{a.destinatario} · {a.estado_envio} · {formatearFecha(a.fecha_programada)}</Typography>
                 </Box>
-                {!a.leida && (
-                  <Box sx={{ display: 'flex', alignItems: 'center', pr: 2 }}>
-                    <Button size="small" onClick={() => marcarLeida(a.id)} sx={{ fontSize: 12, whiteSpace: 'nowrap' }}>Marcar leída</Button>
-                  </Box>
-                )}
+                <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 0.5, pr: 2 }}>
+                  {!a.leida && (
+                    <Button size="small" onClick={() => marcarLeida(a.id)} sx={{ fontSize: 12, whiteSpace: 'nowrap' }}>
+                      Marcar leída
+                    </Button>
+                  )}
+                  <Tooltip title="Descartar esta alerta. Si el documento sigue sin renovarse, el sistema puede volver a generarla.">
+                    <Button
+                      size="small"
+                      color="error"
+                      variant="text"
+                      onClick={() => descartar(a.id)}
+                      sx={{ fontSize: 11, whiteSpace: 'nowrap', opacity: 0.7, '&:hover': { opacity: 1 } }}
+                    >
+                      Descartar
+                    </Button>
+                  </Tooltip>
+                </Box>
               </Paper>
             );
           })}
