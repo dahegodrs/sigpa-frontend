@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import {
   Box, Paper, Typography, Grid, Stack, Button, Tooltip,
   CircularProgress, Alert, LinearProgress, Table, TableHead,
-  TableBody, TableRow, TableCell, Chip,
+  TableBody, TableRow, TableCell, Chip, TextField, MenuItem,
 } from '@mui/material';
 import DownloadIcon from '@mui/icons-material/DownloadOutlined';
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
@@ -14,7 +14,8 @@ import {
 } from 'recharts';
 import AppShell from '@/components/layout/app-shell';
 import ChartCard from '@/components/dashboard/chart-card';
-import { dashboardService, vehiculosService, documentosService, dependenciasService, alertasService } from '@/lib/services';
+import { dashboardService, vehiculosService, documentosService, dependenciasService, alertasService, vencimientosService } from '@/lib/services';
+import type { VencimientoPorMesItem } from '@/lib/services';
 import { exportarCSV } from '@/lib/csv-export';
 import { exportarExcel } from '@/lib/excel-export';
 import { ApiError } from '@/lib/api-client';
@@ -147,6 +148,26 @@ export default function ReportesPage() {
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // ── Reporte Vencimientos por mes ──
+  const hoyDate = new Date();
+  const [vencAnio, setVencAnio] = useState(hoyDate.getFullYear());
+  const [vencMes, setVencMes] = useState(hoyDate.getMonth() + 1);
+  const [vencTipo, setVencTipo] = useState('');
+  const [vencData, setVencData] = useState<VencimientoPorMesItem[]>([]);
+  const [vencCargando, setVencCargando] = useState(false);
+  const [vencError, setVencError] = useState<string | null>(null);
+
+  const cargarVencimientos = (anio: number, mes: number, tipo: string) => {
+    setVencCargando(true);
+    setVencError(null);
+    vencimientosService.porMes(anio, mes || undefined, tipo || undefined)
+      .then(setVencData)
+      .catch((err) => setVencError(err instanceof ApiError ? err.message : 'Error al cargar'))
+      .finally(() => setVencCargando(false));
+  };
+
+  useEffect(() => { cargarVencimientos(vencAnio, vencMes, vencTipo); }, []);
+
   useEffect(() => {
     Promise.all([
       dashboardService.obtenerResumen(),
@@ -165,6 +186,15 @@ export default function ReportesPage() {
       .catch((err) => setError(err instanceof ApiError ? err.message : 'No se pudieron cargar los reportes'))
       .finally(() => setCargando(false));
   }, []);
+
+  const MESES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+  const TIPOS_DOC = ['SOAT','Tecnomecánica','Póliza de seguros','Licencia de tránsito'];
+
+  const colorEstado = (estado: string) => {
+    if (estado === 'Vencido') return 'error.main';
+    if (estado === 'Proximo_a_vencer') return 'warning.main';
+    return 'success.main';
+  };
 
   const vehiculosActivos = vehiculos.filter((v) => v.estado_nombre === 'Activo');
 
@@ -367,6 +397,88 @@ export default function ReportesPage() {
           </Grid>
         </Grid>
       )}
+
+      {/* ── Reporte: Próximos a vencer por mes ── */}
+      <Paper sx={{ p: 3, mb: 3 }}>
+        <Stack direction={{ xs: 'column', sm: 'row' }} justifyContent="space-between" alignItems={{ sm: 'center' }} sx={{ mb: 2 }} spacing={1.5}>
+          <Box>
+            <Typography variant="subtitle1" fontWeight={700}>Próximos a vencer por mes</Typography>
+            <Typography variant="body2" color="text.secondary">Documentos cuya fecha de vencimiento cae en el mes seleccionado</Typography>
+          </Box>
+          <Stack direction="row" spacing={1} flexWrap="wrap">
+            <Button size="small" startIcon={<DownloadIcon />} disabled={vencData.length === 0}
+              onClick={() => exportarCSV('vencimientos_mes', ['Tipo','Placa','Dependencia','Vencimiento','Días restantes','Estado'], vencData.map(d => [d.tipo_documento, d.placa, d.dependencia, d.fecha_vencimiento, d.dias_restantes, d.estado_documento]))}>
+              CSV
+            </Button>
+            <Button size="small" startIcon={<DownloadIcon />} disabled={vencData.length === 0}
+              onClick={() => exportarExcel('vencimientos_mes', 'Vencimientos', ['Tipo','Placa','Dependencia','Vencimiento','Días restantes','Estado'], vencData.map(d => [d.tipo_documento, d.placa, d.dependencia, d.fecha_vencimiento, d.dias_restantes, d.estado_documento]))}>
+              Excel
+            </Button>
+          </Stack>
+        </Stack>
+
+        {/* Filtros */}
+        <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5} sx={{ mb: 2 }}>
+          <TextField select label="Año" size="small" value={vencAnio} onChange={(e) => setVencAnio(Number(e.target.value))} sx={{ minWidth: 100 }}>
+            {[2024,2025,2026,2027,2028].map(a => <MenuItem key={a} value={a}>{a}</MenuItem>)}
+          </TextField>
+          <TextField select label="Mes" size="small" value={vencMes} onChange={(e) => setVencMes(Number(e.target.value))} sx={{ minWidth: 140 }}>
+            {MESES.map((m, i) => <MenuItem key={i+1} value={i+1}>{m}</MenuItem>)}
+          </TextField>
+          <TextField select label="Tipo de documento" size="small" value={vencTipo} onChange={(e) => setVencTipo(e.target.value)} sx={{ minWidth: 200 }}>
+            <MenuItem value="">Todos</MenuItem>
+            {TIPOS_DOC.map(t => <MenuItem key={t} value={t}>{t}</MenuItem>)}
+          </TextField>
+          <Button variant="contained" size="small" onClick={() => cargarVencimientos(vencAnio, vencMes, vencTipo)}>
+            Consultar
+          </Button>
+        </Stack>
+
+        {vencError && <Alert severity="error" sx={{ mb: 1 }}>{vencError}</Alert>}
+
+        {vencCargando ? (
+          <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}><CircularProgress size={28} /></Box>
+        ) : vencData.length === 0 ? (
+          <Box sx={{ py: 4, textAlign: 'center' }}>
+            <Typography variant="body2" color="text.secondary">No hay documentos con vencimiento en ese mes.</Typography>
+          </Box>
+        ) : (
+          <Box sx={{ overflowX: 'auto' }}>
+            <Table sx={{ minWidth: 640 }}>
+              <TableHead>
+                <TableRow>
+                  <TableCell>Tipo</TableCell>
+                  <TableCell>Placa</TableCell>
+                  <TableCell>Dependencia</TableCell>
+                  <TableCell>Fecha vencimiento</TableCell>
+                  <TableCell align="center">Días restantes</TableCell>
+                  <TableCell align="center">Estado</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {vencData.map((item, i) => (
+                  <TableRow key={i} hover>
+                    <TableCell sx={{ fontWeight: 600 }}>{item.tipo_documento}</TableCell>
+                    <TableCell><Chip label={item.placa} size="small" variant="outlined" /></TableCell>
+                    <TableCell>{item.dependencia}</TableCell>
+                    <TableCell>{new Date(item.fecha_vencimiento + 'T00:00:00').toLocaleDateString('es-CO', { day: '2-digit', month: 'short', year: 'numeric' })}</TableCell>
+                    <TableCell align="center">
+                      <Typography variant="body2" fontWeight={700} color={item.dias_restantes <= 7 ? 'error.main' : item.dias_restantes <= 30 ? 'warning.main' : 'text.primary'}>
+                        {item.dias_restantes < 0 ? `Vencido hace ${Math.abs(item.dias_restantes)} días` : `${item.dias_restantes} días`}
+                      </Typography>
+                    </TableCell>
+                    <TableCell align="center">
+                      <Typography variant="caption" fontWeight={600} color={colorEstado(item.estado_documento)}>
+                        {item.estado_documento.replace(/_/g, ' ')}
+                      </Typography>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </Box>
+        )}
+      </Paper>
 
       {/* ── Resumen por dependencia ── */}
       <Paper sx={{ p: 3 }}>

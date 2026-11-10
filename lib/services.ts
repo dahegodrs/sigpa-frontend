@@ -201,6 +201,22 @@ export interface PlantillaSolicitud {
   cuerpo_html: string;
 }
 
+export interface VencimientoPorMesItem {
+  tipo_documento: string;
+  placa: string;
+  dependencia: string;
+  fecha_vencimiento: string;
+  dias_restantes: number;
+  estado_documento: string;
+}
+
+export const vencimientosService = {
+  porMes: (anio?: number, mes?: number, tipo?: string) =>
+    api.get<VencimientoPorMesItem[]>(
+      `/documentos/vencimientos-por-mes${buildQuery({ anio, mes, tipo })}`
+    ),
+};
+
 export const plantillaCorreoService = {
   obtenerSolicitudVehiculo: () => api.get<PlantillaSolicitud>('/plantillas-correo/solicitud-vehiculo'),
   guardarSolicitudVehiculo: (data: PlantillaSolicitud) =>
